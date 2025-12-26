@@ -3,13 +3,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Check,
   Scan,
-  Save,
   Share2,
   Eye,
   EyeOff,
   Crown,
   Lock,
   Loader2,
+  MoveHorizontal,
+  Download,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -64,6 +65,8 @@ const filterOptionToApi: Record<FilterOption, ApiFilterType> = {
   'ai-remove': 'AI',
 };
 
+const COMPARE_GRADIENT_WIDTH = 100;
+
 const memberIdDefault = 1;
 
 const EditScreen: React.FC<EditScreenProps> = ({
@@ -91,6 +94,13 @@ const EditScreen: React.FC<EditScreenProps> = ({
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [detections, setDetections] = useState<DetectionBox[]>([]);
   const [filterType, setFilterType] = useState<FilterOption>('blur');
+  const [compareImages, setCompareImages] = useState<{
+    oldUrl: string;
+    newUrl: string;
+  } | null>(null);
+  const [processedImageUrl, setProcessedImageUrl] = useState<string | null>(null);
+  const [isComparing, setIsComparing] = useState(false);
+  const [comparePosition, setComparePosition] = useState(50);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isProUnlocked, setIsProUnlocked] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState({
@@ -169,14 +179,22 @@ const EditScreen: React.FC<EditScreenProps> = ({
   const editMutation = useMutation({
     mutationFn: requestEdit,
     onSuccess: (data) => {
+      const previousUrl =
+        data.oldUrl ?? displayedImageUrl ?? uploadResult.previewUrl;
+      if (data.newUrl) {
+        setCompareImages({ oldUrl: previousUrl, newUrl: data.newUrl });
+        setComparePosition(50);
+        setIsComparing(true);
+        setProcessedImageUrl(data.newUrl);
+      } else {
+        setProcessedImageUrl(null);
+      }
+
       setDisplayedImageUrl(data.newUrl ?? displayedImageUrl);
       setActiveImageUuid(data.newUuid ?? activeImageUuid);
-      if (data.newUrl) {
-        void downloadEditedImage(data.newUrl);
-      }
       toast({
-        title: '✨ 저장 완료!',
-        description: '안심 사진이 생성되었어요.',
+        title: '✨ 이미지 처리 완료!',
+        description: '이제 저장 버튼으로 다운로드할 수 있어요.',
       });
       queryClient.invalidateQueries({ queryKey: ['history', memberId] });
     },
@@ -222,6 +240,42 @@ const EditScreen: React.FC<EditScreenProps> = ({
         description: '잠시 후 다시 시도해주세요.',
       });
     }
+  };
+
+  const updateComparePosition = (clientX: number) => {
+    const rect = imageRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const relativeX = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+    const position = (relativeX / rect.width) * 100;
+    setComparePosition(position);
+  };
+
+  const getCompareGradientLeft = () => {
+    if (!renderedImageSize) return 0;
+
+    const lineX = (comparePosition / 100) * renderedImageSize.width;
+    const maxLeft = Math.max(renderedImageSize.width - COMPARE_GRADIENT_WIDTH, 0);
+    return Math.min(Math.max(lineX - COMPARE_GRADIENT_WIDTH, 0), maxLeft);
+  };
+
+  const startCompareDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsComparing(true);
+    updateComparePosition(event.clientX);
+
+    const handleMove = (moveEvent: PointerEvent) => {
+      updateComparePosition(moveEvent.clientX);
+    };
+
+    const handleUp = () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
   };
 
   const toggleDetection = (id: string) => {
@@ -393,7 +447,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
       }));
   };
 
-  const handleSave = () => {
+  const handleProcess = () => {
     if (!isAnalyzed) {
       toast({
         title: '먼저 감지를 실행해주세요',
@@ -421,6 +475,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
       return;
     }
 
+    setProcessedImageUrl(null);
     editMutation.mutate({
       imageUuid: activeImageUuid,
       memberId,
@@ -429,8 +484,20 @@ const EditScreen: React.FC<EditScreenProps> = ({
     });
   };
 
+  const handleDownload = () => {
+    if (!processedImageUrl) {
+      toast({
+        title: '처리된 이미지가 없어요',
+        description: '필터 방식을 선택하고 이미지 처리하기를 먼저 진행해주세요.',
+      });
+      return;
+    }
+
+    void downloadEditedImage(processedImageUrl);
+  };
+
   const isAnalyzing = detectMutation.isPending;
-  const isSaving = editMutation.isPending;
+  const isProcessing = editMutation.isPending;
   const handleProUpgrade = () => {
     setIsProUnlocked(true);
     setFilterType('ai-remove');
@@ -448,28 +515,135 @@ const EditScreen: React.FC<EditScreenProps> = ({
         ref={imageContainerRef}
         className="relative flex-1 lg:flex-[2] bg-foreground/5 min-h-[300px] lg:min-h-screen max-h-screen overflow-hidden"
       >
-        <img
-          ref={imageRef}
-          src={displayedImageUrl}
-          alt={uploadResult.fileName ?? '업로드한 이미지'}
-          className="w-full h-full max-h-screen object-cover"
-          onLoad={(event) => {
-            const { naturalWidth, naturalHeight, clientWidth, clientHeight } =
-              event.currentTarget;
-            setImageSize({
-              width: naturalWidth,
-              height: naturalHeight,
-            });
-            setRenderedImageSize({
-              width: clientWidth,
-              height: clientHeight,
-            });
-          }}
-        />
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-foreground/5" />
+          <div className="absolute inset-0 overflow-hidden">
+            <div
+              className="absolute inset-0 scale-110 blur-3xl opacity-60"
+              style={{
+                backgroundImage: `url(${displayedImageUrl})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="relative z-10 flex items-center justify-center w-full h-full">
+          <img
+            ref={imageRef}
+            src={displayedImageUrl}
+            alt={uploadResult.fileName ?? '업로드한 이미지'}
+            className="max-h-screen max-w-full object-contain"
+            onLoad={(event) => {
+              const { naturalWidth, naturalHeight, clientWidth, clientHeight } =
+                event.currentTarget;
+              setImageSize({
+                width: naturalWidth,
+                height: naturalHeight,
+              });
+              setRenderedImageSize({
+                width: clientWidth,
+                height: clientHeight,
+              });
+            }}
+          />
+
+          {renderedImageSize && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                className="relative overflow-hidden"
+                style={{
+                  width: `${renderedImageSize.width}px`,
+                  height: `${renderedImageSize.height}px`,
+                }}
+              >
+                {compareImages && isComparing && (
+                  <div className="absolute inset-0 z-30 pointer-events-none select-none">
+                    <img
+                      src={compareImages.oldUrl}
+                      alt="이전 이미지"
+                      className="w-full h-full object-contain absolute inset-0"
+                      style={{
+                        clipPath: `inset(0 ${100 - comparePosition}% 0 0)`,
+                      }}
+                    />
+
+                    <div
+                      className="absolute inset-y-0"
+                      style={{
+                        left: `${getCompareGradientLeft()}px`,
+                        width: `${COMPARE_GRADIENT_WIDTH}px`,
+                      }}
+                    >
+                      <div
+                        className="absolute inset-y-0 left-0 pointer-events-none"
+                        style={{
+                          width: `${COMPARE_GRADIENT_WIDTH}px`,
+                          background:
+                            'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(107,114,128,0.5) 100%)',
+                        }}
+                      />
+                      <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2">
+                        <div
+                          role="slider"
+                          aria-label="신/구 이미지 비교"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={Math.round(comparePosition)}
+                          className="pointer-events-auto cursor-ew-resize bg-primary text-primary-foreground rounded-full px-2 shadow-lg flex items-center gap-1 w-[66px] h-[30px] justify-center"
+                          onPointerDown={startCompareDrag}
+                        >
+                          <MoveHorizontal className="w-4 h-4" />
+                          <span className="text-xs font-semibold leading-none">
+                            비교
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {isAnalyzed &&
+                  detections.map((detection) => (
+                    <button
+                      key={detection.id}
+                      onClick={() => toggleDetection(detection.id)}
+                      className={`group absolute transition-all duration-300 rounded-xl border-2 ${
+                        detection.isActive
+                          ? 'border-primary shadow-lg'
+                          : 'border-muted-foreground/30 border-dashed'
+                      }`}
+                      style={getDetectionBoxStyle(detection)}
+                    >
+                      <div
+                        className={`absolute -top-7 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 whitespace-nowrap ${
+                          detection.isActive
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {detection.isActive ? (
+                          <EyeOff className="w-3 h-3" />
+                        ) : (
+                          <Eye className="w-3 h-3" />
+                        )}
+                        {detection.label}
+                      </div>
+                      <div
+                        className="absolute bottom-1 right-1 w-3 h-3 rounded-sm bg-primary/80 text-primary-foreground cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                        onPointerDown={(event) => handleResizeStart(detection, event)}
+                      />
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Scanning Overlay */}
         {isAnalyzing && (
-          <div className="absolute inset-0 bg-foreground/20">
+          <div className="absolute inset-0 bg-foreground/20 z-50">
             <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-scan" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="bg-card/90 backdrop-blur-md rounded-2xl px-6 py-4 flex items-center gap-3 shadow-lg">
@@ -482,43 +656,9 @@ const EditScreen: React.FC<EditScreenProps> = ({
           </div>
         )}
 
-        {/* Detection Boxes */}
-        {isAnalyzed &&
-          detections.map((detection) => (
-            <button
-              key={detection.id}
-              onClick={() => toggleDetection(detection.id)}
-              className={`group absolute transition-all duration-300 rounded-xl border-2 ${
-                detection.isActive
-                  ? 'border-primary shadow-lg'
-                  : 'border-muted-foreground/30 border-dashed'
-              }`}
-              style={getDetectionBoxStyle(detection)}
-            >
-              <div
-                className={`absolute -top-7 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 whitespace-nowrap ${
-                  detection.isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {detection.isActive ? (
-                  <EyeOff className="w-3 h-3" />
-                ) : (
-                  <Eye className="w-3 h-3" />
-                )}
-                {detection.label}
-              </div>
-              <div
-                className="absolute bottom-1 right-1 w-3 h-3 rounded-sm bg-primary/80 text-primary-foreground cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity"
-                onPointerDown={(event) => handleResizeStart(detection, event)}
-              />
-            </button>
-          ))}
-
         {/* Active Filters Count */}
         {isAnalyzed && (
-          <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-md rounded-xl px-3 py-2 shadow-md">
+          <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-md rounded-xl px-3 py-2 shadow-md z-50">
             <span className="text-xs font-medium text-muted-foreground">
               보호 영역
             </span>
@@ -739,35 +879,62 @@ const EditScreen: React.FC<EditScreenProps> = ({
           {/* Actions after filter selection */}
           {isAnalyzed && (
             <div className="pt-2 lg:pt-4">
-              <div className="flex gap-3">
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="flex-1 gap-2"
-                  onClick={() => {
-                    toast({
-                      title: '공유 준비 완료',
-                      description: '공유할 앱을 선택해주세요.',
-                    });
-                  }}
-                >
-                  <Share2 className="w-5 h-5" />
-                  공유
-                </Button>
+              <div className="flex flex-col gap-2">
+                {compareImages && (
+                  <Button
+                    variant={isComparing ? 'secondary' : 'outline'}
+                    size="lg"
+                    className="w-full gap-2"
+                    onClick={() => setIsComparing((prev) => !prev)}
+                    disabled={isProcessing}
+                  >
+                    <MoveHorizontal className="w-5 h-5" />
+                    {isComparing ? '비교 끄기' : '신/구 비교'}
+                  </Button>
+                )}
+
                 <Button
                   variant="success"
                   size="lg"
-                  className="flex-1 gap-2"
-                  onClick={handleSave}
-                  disabled={isSaving}
+                  className="w-full gap-2"
+                  onClick={handleProcess}
+                  disabled={isProcessing}
                 >
-                  {isSaving ? (
+                  {isProcessing ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <Save className="w-5 h-5" />
+                    <Scan className="w-5 h-5" />
                   )}
-                  {isSaving ? '저장 중...' : '저장'}
+                  {isProcessing ? '이미지 처리 중...' : '이미지 처리하기'}
                 </Button>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="flex-1 gap-2"
+                    onClick={() => {
+                      toast({
+                        title: '공유 준비 완료',
+                        description: '공유할 앱을 선택해주세요.',
+                      });
+                    }}
+                    disabled={isProcessing}
+                  >
+                    <Share2 className="w-5 h-5" />
+                    공유
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="flex-1 gap-2"
+                    onClick={handleDownload}
+                    disabled={!processedImageUrl || isProcessing}
+                  >
+                    <Download className="w-5 h-5" />
+                    저장
+                  </Button>
+                </div>
               </div>
             </div>
           )}
