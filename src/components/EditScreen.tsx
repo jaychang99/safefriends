@@ -171,6 +171,9 @@ const EditScreen: React.FC<EditScreenProps> = ({
     onSuccess: (data) => {
       setDisplayedImageUrl(data.newUrl ?? displayedImageUrl);
       setActiveImageUuid(data.newUuid ?? activeImageUuid);
+      if (data.newUrl) {
+        void downloadEditedImage(data.newUrl);
+      }
       toast({
         title: '✨ 저장 완료!',
         description: '안심 사진이 생성되었어요.',
@@ -185,6 +188,41 @@ const EditScreen: React.FC<EditScreenProps> = ({
       });
     },
   });
+
+  const downloadEditedImage = async (imageUrl: string) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const extensionFromName = uploadResult.fileName
+        ? uploadResult.fileName.split('.').pop()
+        : undefined;
+      const extensionFromUrl = imageUrl.split('.').pop()?.split('?')[0];
+      const extensionCandidate =
+        extensionFromName && extensionFromName.length <= 5
+          ? extensionFromName
+          : extensionFromUrl && extensionFromUrl.length <= 5
+            ? extensionFromUrl
+            : null;
+      const fileExtension = extensionCandidate || 'png';
+      const baseName = uploadResult.fileName
+        ? uploadResult.fileName.replace(/\.[^/.]+$/, '')
+        : 'safefriends-image';
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${baseName}-edited.${fileExtension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: '다운로드에 실패했어요',
+        description: '잠시 후 다시 시도해주세요.',
+      });
+    }
+  };
 
   const toggleDetection = (id: string) => {
     setDetections((prev) =>
