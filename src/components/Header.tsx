@@ -26,7 +26,7 @@ const Header: React.FC<HeaderProps> = ({ showBack, onBack, title, rightContent }
             <Shield className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="text-lg font-bold text-foreground">
-            {title || 'SafeFriends'}
+            {title || 'SafeLens'}
           </span>
         </Link>
       </div>
