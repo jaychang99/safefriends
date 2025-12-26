@@ -260,9 +260,6 @@ const Dashboard: React.FC = () => {
                 <SquareStack className="w-4 h-4" />
                 최근 {historyQuery.data?.histories?.length ?? 0}건 표시 중
               </div>
-              <Badge variant="outline">
-                member #{historyQuery.data?.memberMeId ?? memberId}
-              </Badge>
             </CardContent>
           </Card>
 
@@ -346,7 +343,7 @@ const Dashboard: React.FC = () => {
                   <Input
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="UUID 또는 필터 검색"
+                    placeholder="필터 검색"
                     className="pl-9"
                   />
                 </div>
@@ -388,9 +385,6 @@ const Dashboard: React.FC = () => {
                           </TableHead>
                           <TableHead>필터</TableHead>
                           <TableHead>감지 영역</TableHead>
-                          <TableHead className="hidden lg:table-cell">
-                            UUID
-                          </TableHead>
                           <TableHead className="w-32 text-right">
                             액션
                           </TableHead>
@@ -439,12 +433,6 @@ const Dashboard: React.FC = () => {
                               </Badge>
                             </TableCell>
                             <TableCell>{renderDetectionBadges(item)}</TableCell>
-                            <TableCell className="hidden lg:table-cell">
-                              <div className="text-xs text-muted-foreground">
-                                <p>원본: {item.oldUuid.slice(0, 8)}...</p>
-                                <p>편집: {item.newUuid.slice(0, 8)}...</p>
-                              </div>
-                            </TableCell>
                             <TableCell className="text-right">
                               <Button
                                 variant="ghost"
@@ -478,7 +466,7 @@ const Dashboard: React.FC = () => {
           <SheetHeader>
             <SheetTitle>히스토리 상세</SheetTitle>
             <SheetDescription>
-              이미지 서버에서 반환하는 UUID를 기반으로 원본·편집본을 조회합니다.
+              원본 이미지와 편집된 이미지를 비교하고 상세 정보를 확인할 수 있습니다.
             </SheetDescription>
           </SheetHeader>
 
@@ -593,10 +581,7 @@ const Dashboard: React.FC = () => {
                 </ScrollArea>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>
-                  API: GET /history/detail/{detailQuery.data.historyId}
-                </span>
+              <div className="flex items-center justify-end">
                 <Button
                   variant="secondary"
                   size="sm"
