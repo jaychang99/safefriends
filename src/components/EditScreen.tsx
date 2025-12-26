@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Check,
   Scan,
-  Save,
   Share2,
   Eye,
   EyeOff,
@@ -11,6 +10,7 @@ import {
   Lock,
   Loader2,
   MoveHorizontal,
+  Download,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -98,6 +98,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
     oldUrl: string;
     newUrl: string;
   } | null>(null);
+  const [processedImageUrl, setProcessedImageUrl] = useState<string | null>(null);
   const [isComparing, setIsComparing] = useState(false);
   const [comparePosition, setComparePosition] = useState(50);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
@@ -184,16 +185,16 @@ const EditScreen: React.FC<EditScreenProps> = ({
         setCompareImages({ oldUrl: previousUrl, newUrl: data.newUrl });
         setComparePosition(50);
         setIsComparing(true);
+        setProcessedImageUrl(data.newUrl);
+      } else {
+        setProcessedImageUrl(null);
       }
 
       setDisplayedImageUrl(data.newUrl ?? displayedImageUrl);
       setActiveImageUuid(data.newUuid ?? activeImageUuid);
-      if (data.newUrl) {
-        void downloadEditedImage(data.newUrl);
-      }
       toast({
-        title: '✨ 저장 완료!',
-        description: '안심 사진이 생성되었어요.',
+        title: '✨ 이미지 처리 완료!',
+        description: '이제 저장 버튼으로 다운로드할 수 있어요.',
       });
       queryClient.invalidateQueries({ queryKey: ['history', memberId] });
     },
@@ -446,7 +447,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
       }));
   };
 
-  const handleSave = () => {
+  const handleProcess = () => {
     if (!isAnalyzed) {
       toast({
         title: '먼저 감지를 실행해주세요',
@@ -474,6 +475,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
       return;
     }
 
+    setProcessedImageUrl(null);
     editMutation.mutate({
       imageUuid: activeImageUuid,
       memberId,
@@ -482,8 +484,20 @@ const EditScreen: React.FC<EditScreenProps> = ({
     });
   };
 
+  const handleDownload = () => {
+    if (!processedImageUrl) {
+      toast({
+        title: '처리된 이미지가 없어요',
+        description: '필터 방식을 선택하고 이미지 처리하기를 먼저 진행해주세요.',
+      });
+      return;
+    }
+
+    void downloadEditedImage(processedImageUrl);
+  };
+
   const isAnalyzing = detectMutation.isPending;
-  const isSaving = editMutation.isPending;
+  const isProcessing = editMutation.isPending;
   const handleProUpgrade = () => {
     setIsProUnlocked(true);
     setFilterType('ai-remove');
@@ -866,24 +880,32 @@ const EditScreen: React.FC<EditScreenProps> = ({
           {isAnalyzed && (
             <div className="pt-2 lg:pt-4">
               <div className="flex flex-col gap-2">
+                {compareImages && (
+                  <Button
+                    variant={isComparing ? 'secondary' : 'outline'}
+                    size="lg"
+                    className="w-full gap-2"
+                    onClick={() => setIsComparing((prev) => !prev)}
+                    disabled={isProcessing}
+                  >
+                    <MoveHorizontal className="w-5 h-5" />
+                    {isComparing ? '비교 끄기' : '신/구 비교'}
+                  </Button>
+                )}
+
                 <Button
-                  variant={isComparing ? 'secondary' : 'outline'}
+                  variant="success"
                   size="lg"
                   className="w-full gap-2"
-                  onClick={() => {
-                    if (!compareImages) {
-                      toast({
-                        title: '비교할 이미지가 없어요',
-                        description: '저장 후 신/구 이미지를 비교할 수 있어요.',
-                      });
-                      return;
-                    }
-                    setIsComparing((prev) => !prev);
-                  }}
-                  disabled={isSaving}
+                  onClick={handleProcess}
+                  disabled={isProcessing}
                 >
-                  <MoveHorizontal className="w-5 h-5" />
-                  {isComparing ? '비교 끄기' : '신/구 비교'}
+                  {isProcessing ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Scan className="w-5 h-5" />
+                  )}
+                  {isProcessing ? '이미지 처리 중...' : '이미지 처리하기'}
                 </Button>
 
                 <div className="flex gap-3">
@@ -897,23 +919,20 @@ const EditScreen: React.FC<EditScreenProps> = ({
                         description: '공유할 앱을 선택해주세요.',
                       });
                     }}
+                    disabled={isProcessing}
                   >
                     <Share2 className="w-5 h-5" />
                     공유
                   </Button>
                   <Button
-                    variant="success"
+                    variant="secondary"
                     size="lg"
                     className="flex-1 gap-2"
-                    onClick={handleSave}
-                    disabled={isSaving}
+                    onClick={handleDownload}
+                    disabled={!processedImageUrl || isProcessing}
                   >
-                    {isSaving ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <Save className="w-5 h-5" />
-                    )}
-                    {isSaving ? '저장 중...' : '저장'}
+                    <Download className="w-5 h-5" />
+                    저장
                   </Button>
                 </div>
               </div>
