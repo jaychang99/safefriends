@@ -29,7 +29,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+  } from "@/components/ui/sheet";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -78,6 +78,7 @@ const Dashboard: React.FC = () => {
   const [filterTab, setFilterTab] = useState<FilterTab>("ALL");
   const [categoryTab, setCategoryTab] = useState<CategoryTab>("ALL");
   const [searchTerm, setSearchTerm] = useState("");
+  const [thumbFallback, setThumbFallback] = useState<Record<number, boolean>>({});
 
   const historyQuery = useQuery({
     queryKey: ["history", memberId],
@@ -118,6 +119,12 @@ const Dashboard: React.FC = () => {
     historyQuery.data?.histories.reduce((sum, h) => sum + h.detections.length, 0) ?? 0;
   const aiEdits = historyQuery.data?.histories.filter((h) => h.filter === "AI").length ?? 0;
   const latestHistory = sortedFilteredHistories[0];
+
+  const fallbackThumbUrl = (seed: number) =>
+    `https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&auto=format&fit=crop&q=60&sig=${seed}`;
+
+  const getThumbSrc = (item: HistoryItem) =>
+    thumbFallback[item.historyId] ? fallbackThumbUrl(item.historyId) : buildImageUrl(item.newUuid, "edited");
 
   const renderDetectionBadges = (item: HistoryItem) => (
     <div className="flex flex-wrap gap-2">
@@ -289,6 +296,7 @@ const Dashboard: React.FC = () => {
                     <Table>
                       <TableHeader className="bg-muted/40">
                         <TableRow>
+                          <TableHead className="w-[120px]">썸네일</TableHead>
                           <TableHead className="min-w-[160px]">편집 시간</TableHead>
                           <TableHead>필터</TableHead>
                           <TableHead>감지 영역</TableHead>
@@ -299,6 +307,20 @@ const Dashboard: React.FC = () => {
                       <TableBody>
                         {sortedFilteredHistories.map((item) => (
                           <TableRow key={item.historyId} className="hover:bg-primary/5">
+                            <TableCell>
+                              <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/30">
+                                <AspectRatio ratio={4 / 3} className="bg-muted">
+                                  <img
+                                    src={getThumbSrc(item)}
+                                    alt="편집된 이미지 썸네일"
+                                    className="h-full w-full object-cover"
+                                    onError={() =>
+                                      setThumbFallback((prev) => ({ ...prev, [item.historyId]: true }))
+                                    }
+                                  />
+                                </AspectRatio>
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <div className="flex flex-col">
                                 <span className="font-semibold text-foreground">
