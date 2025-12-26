@@ -164,19 +164,31 @@ const Dashboard: React.FC = () => {
       ? fallbackThumbUrl(item.historyId)
       : item.newUrl ?? buildImageUrl(item.newUuid, 'edited');
 
-  const renderDetectionBadges = (item: HistoryItem) => (
-    <div className="flex flex-wrap gap-2">
-      {item.detections.map((det) => (
-        <Badge
-          key={det.detectId ?? `${det.category}-${det.x}-${det.y}`}
-          className={categoryTone[det.category]}
-          variant="outline"
-        >
-          {categoryLabels[det.category]}
-        </Badge>
-      ))}
-    </div>
-  );
+  const renderDetectionBadges = (item: HistoryItem) => {
+    // 카테고리별 개수 계산
+    const categoryCounts = item.detections.reduce((acc, det) => {
+      acc[det.category] = (acc[det.category] || 0) + 1;
+      return acc;
+    }, {} as Record<DetectCategory, number>);
+
+    // 카테고리를 정렬된 순서로 표시
+    const sortedCategories = Object.entries(categoryCounts) as [DetectCategory, number][];
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {sortedCategories.map(([category, count]) => (
+          <Badge
+            key={category}
+            className={categoryTone[category]}
+            variant="outline"
+          >
+            {categoryLabels[category]}
+            {count > 1 && ` × ${count}`}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
 
   const emptyState =
     historyQuery.isLoading ||
