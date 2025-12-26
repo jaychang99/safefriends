@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Check, Scan, Save, Share2, Eye, EyeOff, Crown, Lock } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
@@ -27,6 +27,7 @@ const MOCK_DETECTIONS: DetectionBox[] = [
 ];
 
 const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
+  const imageContainerRef = useRef<HTMLDivElement>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [detections, setDetections] = useState<DetectionBox[]>([]);
@@ -84,12 +85,60 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
     }
   };
 
+  const handleResizeStart = (detection: DetectionBox, event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const container = imageContainerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startWidth = detection.width;
+    const startHeight = detection.height;
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = ((moveEvent.clientX - startX) / rect.width) * 100;
+      const deltaY = ((moveEvent.clientY - startY) / rect.height) * 100;
+
+      setDetections(prev =>
+        prev.map(d => {
+          if (d.id !== detection.id) return d;
+
+          const newWidth = Math.min(100 - d.x, Math.max(5, startWidth + deltaX));
+          const newHeight = Math.min(100 - d.y, Math.max(5, startHeight + deltaY));
+          const updatedDetection = { ...d, width: newWidth, height: newHeight };
+
+          console.log('Detection resized', {
+            id: updatedDetection.id,
+            label: updatedDetection.label,
+            x: updatedDetection.x,
+            y: updatedDetection.y,
+            width: updatedDetection.width,
+            height: updatedDetection.height,
+          });
+
+          return updatedDetection;
+        })
+      );
+    };
+
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-card">
       <Header showBack onBack={onBack} title="사진 편집" />
       
       {/* Image Container */}
-      <div className="relative flex-1 lg:flex-[2] bg-foreground/5 min-h-[300px] lg:min-h-screen">
+      <div ref={imageContainerRef} className="relative flex-1 lg:flex-[2] bg-foreground/5 min-h-[300px] lg:min-h-screen">
         <img
           src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80"
           alt="카페에서 노트북 작업 중인 사람"
@@ -114,7 +163,7 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
           <button
             key={detection.id}
             onClick={() => toggleDetection(detection.id)}
-            className={`absolute transition-all duration-300 rounded-xl border-2 ${
+            className={`group absolute transition-all duration-300 rounded-xl border-2 ${
               detection.isActive 
                 ? 'border-primary shadow-lg' 
                 : 'border-muted-foreground/30 border-dashed'
@@ -139,6 +188,10 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
               )}
               {detection.label}
             </div>
+            <div
+              className="absolute bottom-1 right-1 w-3 h-3 rounded-sm bg-primary/80 text-primary-foreground cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity"
+              onPointerDown={(event) => handleResizeStart(detection, event)}
+            />
           </button>
         ))}
 
