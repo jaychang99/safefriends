@@ -509,11 +509,11 @@ const EditScreen: React.FC<EditScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-card">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col lg:flex-row bg-card">
       {/* Image Container */}
       <div
         ref={imageContainerRef}
-        className="relative flex-1 lg:flex-[2] bg-foreground/5 min-h-[300px] lg:min-h-screen max-h-screen overflow-hidden"
+        className="relative flex-1 lg:flex-[2] bg-foreground/5 min-h-[300px] lg:h-screen max-h-screen overflow-hidden"
       >
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-foreground/5" />
@@ -670,7 +670,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
       </div>
 
       {/* Control Panel - Bottom sheet on mobile, sidebar on desktop */}
-      <div className="lg:w-96 lg:min-h-screen bg-card rounded-t-3xl lg:rounded-none shadow-lg lg:shadow-none border-t lg:border-t-0 lg:border-l border-border/50 -mt-4 lg:mt-0 relative z-10">
+      <div className="lg:w-96 lg:h-screen lg:overflow-y-auto bg-card rounded-t-3xl lg:rounded-none shadow-lg lg:shadow-none border-t lg:border-t-0 lg:border-l border-border/50 -mt-4 lg:mt-0 relative z-10">
         <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mt-3 lg:hidden" />
 
         <div className="px-5 lg:px-6 py-4 lg:py-8 space-y-5 lg:space-y-6 pb-8">
