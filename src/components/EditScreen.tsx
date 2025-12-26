@@ -752,29 +752,33 @@ const EditScreen: React.FC<EditScreenProps> = ({
           </div>
 
           {/* Analyze CTA */}
-          <div className="pt-1 lg:pt-2">
-            {!isAnalyzed ? (
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleAnalyze}
-                disabled={isAnalyzing}
-              >
-                {isAnalyzing ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Scan className="w-5 h-5" />
-                )}
-                {isAnalyzing ? '분석 중...' : 'AI 안심 분석 시작'}
-              </Button>
-            ) : (
+          <div className="pt-1 lg:pt-2 space-y-2">
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full gap-2"
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+            >
+              {isAnalyzing ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Scan className="w-5 h-5" />
+              )}
+              {isAnalyzing
+                ? '분석 중...'
+                : isAnalyzed
+                  ? 'AI 안심 분석 다시 실행'
+                  : 'AI 안심 분석 시작'}
+            </Button>
+
+            {isAnalyzed && (
               <div className="flex items-start gap-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-primary">
                 <Check className="w-5 h-5 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold">AI 안심 분석 완료</p>
                   <p className="text-xs text-primary/80">
-                    이제 감지된 영역에 적용할 필터 방식을 선택하세요.
+                    필터 방식을 선택하거나, 필요하면 다시 분석할 수 있어요.
                   </p>
                 </div>
               </div>
