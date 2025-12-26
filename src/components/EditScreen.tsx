@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Check, Scan, Save, Share2, Eye, EyeOff } from 'lucide-react';
+import { Check, Scan, Save, Share2, Eye, EyeOff, Crown, Lock } from 'lucide-react';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import Header from './Header';
 import { toast } from '@/hooks/use-toast';
 
@@ -30,6 +31,7 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [detections, setDetections] = useState<DetectionBox[]>([]);
   const [filterType, setFilterType] = useState<FilterType>('blur');
+  const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState({
     qr: false,
     personal: false,
@@ -202,18 +204,34 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
               {[
                 { key: 'blur', label: '블러' },
                 { key: 'mosaic', label: '모자이크' },
-                { key: 'ai-remove', label: 'AI 자연스럽게 지우기' },
+                { key: 'ai-remove', label: 'AI 자연스럽게 지우기', pro: true, description: '자연스럽게 복원하는 프리미엄 필터' },
               ].map((option) => (
                 <button
                   key={option.key}
-                  onClick={() => setFilterType(option.key as FilterType)}
-                  className={`flex-1 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                    filterType === option.key
+                  onClick={() => option.pro ? setIsPricingOpen(true) : setFilterType(option.key as FilterType)}
+                  className={`flex-1 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all text-left ${
+                    filterType === option.key && !option.pro
                       ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
+                      : option.pro
+                        ? 'bg-primary/5 border-primary/40 text-primary hover:border-primary/60 hover:bg-primary/10'
+                        : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
                   }`}
                 >
-                  {option.label}
+                  <div className="flex items-center gap-2">
+                    <span>{option.label}</span>
+                    {option.pro && (
+                      <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-[10px] font-bold tracking-wide">
+                        <Crown className="w-3 h-3" />
+                        PRO
+                      </span>
+                    )}
+                  </div>
+                  {option.pro && (
+                    <div className="mt-1.5 flex items-center gap-2 text-xs text-primary">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{option.description}</span>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -289,6 +307,102 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
           </div>
         </div>
       </div>
+
+      <Dialog open={isPricingOpen} onOpenChange={setIsPricingOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>AI 자연스럽게 지우기는 Pro 기능이에요</DialogTitle>
+            <DialogDescription>
+              자연스러운 복원과 고해상도 내보내기를 포함한 업그레이드 플랜을 선택해보세요.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {[
+              {
+                name: 'Basic',
+                price: '무료',
+                period: '',
+                description: '개인 사용자를 위한 기본 보호',
+                features: ['블러/모자이크 필터', '표준 감지 옵션', '저장 · 공유 지원'],
+                cta: '현재 이용 중',
+                variant: 'secondary' as const,
+                disabled: true,
+              },
+              {
+                name: 'Pro',
+                price: '12,000원',
+                period: '/월',
+                description: 'AI가 알아서 자연스럽게 복원',
+                features: ['AI 자연스럽게 지우기', '무제한 감지 및 토글', '고해상도 내보내기'],
+                cta: 'Pro로 업그레이드',
+                highlight: true,
+                variant: 'primary' as const,
+              },
+              {
+                name: 'Enterprise',
+                price: '맞춤 상담',
+                period: '',
+                description: '팀과 보안을 위한 전담 지원',
+                features: ['팀 좌석 · 접근 제어', '보안 규정 맞춤 설정', '전담 매니저 및 SLA'],
+                cta: '상담 요청하기',
+                variant: 'outline' as const,
+              },
+            ].map((plan) => (
+              <div
+                key={plan.name}
+                className={`rounded-2xl border p-4 shadow-sm transition-all ${
+                  plan.highlight
+                    ? 'border-primary bg-primary/5 shadow-lg'
+                    : 'border-border/60 bg-background'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-lg font-bold text-foreground">{plan.name}</p>
+                    <p className="text-sm text-muted-foreground">{plan.description}</p>
+                  </div>
+                  {plan.highlight && (
+                    <span className="rounded-full bg-primary text-primary-foreground px-2 py-1 text-[11px] font-semibold">
+                      추천
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="text-3xl font-extrabold text-foreground">{plan.price}</span>
+                  {plan.period && <span className="text-sm font-semibold text-muted-foreground">{plan.period}</span>}
+                </div>
+
+                <div className="mt-4 space-y-2 text-sm text-foreground">
+                  {plan.features.map((feature) => (
+                    <div key={feature} className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-primary mt-0.5" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  className="mt-5 w-full"
+                  variant={plan.variant}
+                  size="lg"
+                  disabled={plan.disabled}
+                  onClick={() => {
+                    toast({
+                      title: `${plan.name} 플랜 문의가 접수되었어요.`,
+                      description: '담당자가 곧 안내드릴게요.',
+                    });
+                    setIsPricingOpen(false);
+                  }}
+                >
+                  {plan.cta}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
