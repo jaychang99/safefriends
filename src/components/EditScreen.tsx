@@ -101,7 +101,9 @@ const EditScreen: React.FC<EditScreenProps> = ({
     oldUrl: string;
     newUrl: string;
   } | null>(null);
-  const [processedImageUrl, setProcessedImageUrl] = useState<string | null>(null);
+  const [processedImageUrl, setProcessedImageUrl] = useState<string | null>(
+    null,
+  );
   const [isDownloading, setIsDownloading] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
   const [comparePosition, setComparePosition] = useState(50);
@@ -262,12 +264,12 @@ const EditScreen: React.FC<EditScreenProps> = ({
         extensionFromName && extensionFromName.length <= 5
           ? extensionFromName
           : extensionFromUrl && extensionFromUrl.length <= 5
-            ? extensionFromUrl
-            : null;
+          ? extensionFromUrl
+          : null;
       const fileExtension = extensionCandidate || 'png';
       const baseName = uploadResult.fileName
         ? uploadResult.fileName.replace(/\.[^/.]+$/, '')
-        : 'safefriends-image';
+        : 'safelens-image';
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = `${baseName}-edited.${fileExtension}`;
@@ -297,7 +299,10 @@ const EditScreen: React.FC<EditScreenProps> = ({
     if (!renderedImageSize) return 0;
 
     const lineX = (comparePosition / 100) * renderedImageSize.width;
-    const maxLeft = Math.max(renderedImageSize.width - COMPARE_GRADIENT_WIDTH, 0);
+    const maxLeft = Math.max(
+      renderedImageSize.width - COMPARE_GRADIENT_WIDTH,
+      0,
+    );
     return Math.min(Math.max(lineX - COMPARE_GRADIENT_WIDTH, 0), maxLeft);
   };
 
@@ -463,7 +468,10 @@ const EditScreen: React.FC<EditScreenProps> = ({
       setDetections((prev) =>
         prev.map((d) => {
           if (d.id !== detection.id) return d;
-          const nextX = Math.min(100 - d.width, Math.max(0, startLeft + deltaX));
+          const nextX = Math.min(
+            100 - d.width,
+            Math.max(0, startLeft + deltaX),
+          );
           const nextY = Math.min(
             100 - d.height,
             Math.max(0, startTop + deltaY),
@@ -583,7 +591,8 @@ const EditScreen: React.FC<EditScreenProps> = ({
     if (!processedImageUrl) {
       toast({
         title: '처리된 이미지가 없어요',
-        description: '필터 방식을 선택하고 이미지 처리하기를 먼저 진행해주세요.',
+        description:
+          '필터 방식을 선택하고 이미지 처리하기를 먼저 진행해주세요.',
       });
       return;
     }
@@ -704,12 +713,15 @@ const EditScreen: React.FC<EditScreenProps> = ({
                   </div>
                 )}
 
-                {isAnalyzed && !isComparing &&
+                {isAnalyzed &&
+                  !isComparing &&
                   detections.map((detection) => (
                     <button
                       key={detection.id}
                       type="button"
-                      onPointerDown={(event) => handleDragStart(detection, event)}
+                      onPointerDown={(event) =>
+                        handleDragStart(detection, event)
+                      }
                       className={`group absolute transition-all duration-300 rounded-xl border-2 ${
                         detection.isActive
                           ? 'border-primary shadow-lg'
@@ -753,7 +765,9 @@ const EditScreen: React.FC<EditScreenProps> = ({
                       </div>
                       <div
                         className="absolute bottom-1 right-1 w-3 h-3 rounded-sm bg-primary/80 text-primary-foreground cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity"
-                        onPointerDown={(event) => handleResizeStart(detection, event)}
+                        onPointerDown={(event) =>
+                          handleResizeStart(detection, event)
+                        }
                       />
                     </button>
                   ))}
@@ -889,8 +903,8 @@ const EditScreen: React.FC<EditScreenProps> = ({
               {isAnalyzing
                 ? '분석 중...'
                 : isAnalyzed
-                  ? 'AI 안심 분석 다시 실행'
-                  : 'AI 안심 분석 시작'}
+                ? 'AI 안심 분석 다시 실행'
+                : 'AI 안심 분석 시작'}
             </Button>
 
             {isAnalyzed && (
@@ -914,7 +928,8 @@ const EditScreen: React.FC<EditScreenProps> = ({
                     수동 영역 추가
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    중앙에 새 박스를 만든 뒤 드래그와 리사이즈로 위치를 조정하세요.
+                    중앙에 새 박스를 만든 뒤 드래그와 리사이즈로 위치를
+                    조정하세요.
                   </p>
                 </div>
                 <Button
@@ -1101,7 +1116,9 @@ const EditScreen: React.FC<EditScreenProps> = ({
                     size="lg"
                     className="flex-1 gap-2"
                     onClick={handleDownload}
-                    disabled={!processedImageUrl || isProcessing || isDownloading}
+                    disabled={
+                      !processedImageUrl || isProcessing || isDownloading
+                    }
                   >
                     {isDownloading ? (
                       <Loader2 className="w-5 h-5 animate-spin" />

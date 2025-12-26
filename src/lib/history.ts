@@ -1,10 +1,5 @@
-import { QueryFunction } from "@tanstack/react-query";
-import {
-  apiClient,
-  DetectCategory,
-  FilterType,
-  DetectionRegion,
-} from "./api";
+import { QueryFunction } from '@tanstack/react-query';
+import { apiClient, DetectCategory, FilterType, DetectionRegion } from './api';
 
 export interface Detection {
   detectId?: number;
@@ -48,26 +43,26 @@ export interface HistoryDetailResponse {
 
 const IMAGE_BASE =
   import.meta.env.VITE_IMAGE_BASE_URL ??
-  (apiClient.defaults.baseURL ? `${apiClient.defaults.baseURL}/images` : "");
+  (apiClient.defaults.baseURL ? `${apiClient.defaults.baseURL}/images` : '');
 
 // Mock data can be opted into with VITE_USE_MOCK=true
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 const mockHistoryResponse: HistoryResponse = {
   memberMeId: 12345,
-  nickname: "safefriends_user",
+  nickname: 'safelens',
   totalHistories: 6,
   histories: [
     {
       historyId: 789,
-      oldUuid: "550e8400-e29b-41d4-a716-446655440000",
-      newUuid: "550e8400-e29b-41d4-a716-446655440001",
-      filter: "AI",
-      createdAt: "2025-12-26T14:30:25Z",
+      oldUuid: '550e8400-e29b-41d4-a716-446655440000',
+      newUuid: '550e8400-e29b-41d4-a716-446655440001',
+      filter: 'AI',
+      createdAt: '2025-12-26T14:30:25Z',
       detections: [
         {
           detectId: 1001,
-          category: "FACE",
+          category: 'FACE',
           x: 120,
           y: 200,
           width: 150,
@@ -76,7 +71,7 @@ const mockHistoryResponse: HistoryResponse = {
         },
         {
           detectId: 1002,
-          category: "TEXT",
+          category: 'TEXT',
           x: 50,
           y: 450,
           width: 200,
@@ -87,14 +82,14 @@ const mockHistoryResponse: HistoryResponse = {
     },
     {
       historyId: 788,
-      oldUuid: "4f1c6647-1209-4d4a-afc8-4a10953b0a11",
-      newUuid: "4f1c6647-1209-4d4a-afc8-4a10953b0a12",
-      filter: "BLUR",
-      createdAt: "2025-12-25T10:15:00Z",
+      oldUuid: '4f1c6647-1209-4d4a-afc8-4a10953b0a11',
+      newUuid: '4f1c6647-1209-4d4a-afc8-4a10953b0a12',
+      filter: 'BLUR',
+      createdAt: '2025-12-25T10:15:00Z',
       detections: [
         {
           detectId: 1000,
-          category: "QRBARCODE",
+          category: 'QRBARCODE',
           x: 300,
           y: 100,
           width: 80,
@@ -105,14 +100,14 @@ const mockHistoryResponse: HistoryResponse = {
     },
     {
       historyId: 777,
-      oldUuid: "760f0c39-4fcd-447e-8e0e-158414c5c002",
-      newUuid: "760f0c39-4fcd-447e-8e0e-158414c5c099",
-      filter: "MOSAIC",
-      createdAt: "2025-12-23T08:00:00Z",
+      oldUuid: '760f0c39-4fcd-447e-8e0e-158414c5c002',
+      newUuid: '760f0c39-4fcd-447e-8e0e-158414c5c099',
+      filter: 'MOSAIC',
+      createdAt: '2025-12-23T08:00:00Z',
       detections: [
         {
           detectId: 1003,
-          category: "LOCATION",
+          category: 'LOCATION',
           x: 88,
           y: 320,
           width: 160,
@@ -121,7 +116,7 @@ const mockHistoryResponse: HistoryResponse = {
         },
         {
           detectId: 1004,
-          category: "TEXT",
+          category: 'TEXT',
           x: 40,
           y: 260,
           width: 120,
@@ -132,14 +127,14 @@ const mockHistoryResponse: HistoryResponse = {
     },
     {
       historyId: 776,
-      oldUuid: "9012e268-290a-41da-b3d6-0c76d4f556b5",
-      newUuid: "9012e268-290a-41da-b3d6-0c76d4f556c1",
-      filter: "BLUR",
-      createdAt: "2025-12-22T18:25:00Z",
+      oldUuid: '9012e268-290a-41da-b3d6-0c76d4f556b5',
+      newUuid: '9012e268-290a-41da-b3d6-0c76d4f556c1',
+      filter: 'BLUR',
+      createdAt: '2025-12-22T18:25:00Z',
       detections: [
         {
           detectId: 1005,
-          category: "FACE",
+          category: 'FACE',
           x: 110,
           y: 180,
           width: 140,
@@ -150,14 +145,14 @@ const mockHistoryResponse: HistoryResponse = {
     },
     {
       historyId: 775,
-      oldUuid: "c1b64a0f-3b9c-4f4c-b2b8-7f418a0cf1ba",
-      newUuid: "c1b64a0f-3b9c-4f4c-b2b8-7f418a0cf1bb",
-      filter: "AI",
-      createdAt: "2025-12-21T15:00:00Z",
+      oldUuid: 'c1b64a0f-3b9c-4f4c-b2b8-7f418a0cf1ba',
+      newUuid: 'c1b64a0f-3b9c-4f4c-b2b8-7f418a0cf1bb',
+      filter: 'AI',
+      createdAt: '2025-12-21T15:00:00Z',
       detections: [
         {
           detectId: 1006,
-          category: "FACE",
+          category: 'FACE',
           x: 70,
           y: 150,
           width: 120,
@@ -166,7 +161,7 @@ const mockHistoryResponse: HistoryResponse = {
         },
         {
           detectId: 1007,
-          category: "LOCATION",
+          category: 'LOCATION',
           x: 200,
           y: 320,
           width: 140,
@@ -177,14 +172,14 @@ const mockHistoryResponse: HistoryResponse = {
     },
     {
       historyId: 774,
-      oldUuid: "a4cd2c26-4a89-4cb9-93d0-4a66f4154804",
-      newUuid: "a4cd2c26-4a89-4cb9-93d0-4a66f4154805",
-      filter: "MOSAIC",
-      createdAt: "2025-12-20T11:00:00Z",
+      oldUuid: 'a4cd2c26-4a89-4cb9-93d0-4a66f4154804',
+      newUuid: 'a4cd2c26-4a89-4cb9-93d0-4a66f4154805',
+      filter: 'MOSAIC',
+      createdAt: '2025-12-20T11:00:00Z',
       detections: [
         {
           detectId: 1008,
-          category: "ETC",
+          category: 'ETC',
           x: 150,
           y: 250,
           width: 100,
@@ -199,27 +194,28 @@ const mockHistoryResponse: HistoryResponse = {
 const mockHistoryDetail: HistoryDetailResponse = {
   historyId: 789,
   memberId: 12345,
-  imageUuid: "550e8400-e29b-41d4-a716-446655440000",
+  imageUuid: '550e8400-e29b-41d4-a716-446655440000',
   editedImageUrl: `${IMAGE_BASE}/edited/550e8400-e29b-41d4-a716-446655440001.jpg`,
-  filter: "AI",
-  createdAt: "2025-12-26T14:30:25Z",
+  filter: 'AI',
+  createdAt: '2025-12-26T14:30:25Z',
   detections: mockHistoryResponse.histories[0].detections,
 };
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const buildImageUrl = (uuid: string, type: "original" | "edited") => {
-  const suffix = type === "edited" ? "edited" : "original";
-  const base = (IMAGE_BASE ?? "").replace(/\/$/, "");
-  const prefix = base ? `${base}/` : "/";
+export const buildImageUrl = (uuid: string, type: 'original' | 'edited') => {
+  const suffix = type === 'edited' ? 'edited' : 'original';
+  const base = (IMAGE_BASE ?? '').replace(/\/$/, '');
+  const prefix = base ? `${base}/` : '/';
   return `${prefix}${suffix}/${uuid}.jpg`;
 };
 
 export const isUsingMockHistoryApi = USE_MOCK;
 
-export const fetchHistory: QueryFunction<HistoryResponse, ["history", number]> = async ({
-  queryKey,
-}) => {
+export const fetchHistory: QueryFunction<
+  HistoryResponse,
+  ['history', number]
+> = async ({ queryKey }) => {
   const [, memberId] = queryKey;
 
   if (USE_MOCK) {
@@ -234,7 +230,7 @@ export const fetchHistory: QueryFunction<HistoryResponse, ["history", number]> =
 
 export const fetchHistoryDetail: QueryFunction<
   HistoryDetailResponse,
-  ["history-detail", number]
+  ['history-detail', number]
 > = async ({ queryKey }) => {
   const [, historyId] = queryKey;
 

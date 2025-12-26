@@ -33,7 +33,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -116,7 +115,9 @@ const Dashboard: React.FC = () => {
     type: 'original' | 'edited' | 'thumbnail';
     historyId?: number;
   } | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(
+    null,
+  );
   const [imageLoading, setImageLoading] = useState(false);
 
   usePageTitle('히스토리 대시보드');
@@ -205,7 +206,7 @@ const Dashboard: React.FC = () => {
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = filename || 'safefriends-image.jpg';
+      link.download = filename || 'safelens-image.jpg';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -257,7 +258,10 @@ const Dashboard: React.FC = () => {
     }, {} as Record<DetectCategory, number>);
 
     // 카테고리를 정렬된 순서로 표시
-    const sortedCategories = Object.entries(categoryCounts) as [DetectCategory, number][];
+    const sortedCategories = Object.entries(categoryCounts) as [
+      DetectCategory,
+      number,
+    ][];
 
     return (
       <div className="flex flex-wrap gap-2">
@@ -512,13 +516,17 @@ const Dashboard: React.FC = () => {
                               <div
                                 className="overflow-hidden rounded-xl border border-border/60 bg-muted/30 cursor-pointer hover:opacity-80 transition-opacity"
                                 onClick={() => {
-                                  const index = sortedFilteredHistories.findIndex(
-                                    (h) => h.historyId === item.historyId,
-                                  );
+                                  const index =
+                                    sortedFilteredHistories.findIndex(
+                                      (h) => h.historyId === item.historyId,
+                                    );
                                   setImageLoading(true);
                                   setCurrentImageIndex(index);
                                   setLightboxImage({
-                                    url: addQualityParam(getThumbSrc(item), 'low'),
+                                    url: addQualityParam(
+                                      getThumbSrc(item),
+                                      'low',
+                                    ),
                                     title: `편집 #${item.historyId}`,
                                     type: 'thumbnail',
                                     historyId: item.historyId,
@@ -594,7 +602,8 @@ const Dashboard: React.FC = () => {
           <SheetHeader>
             <SheetTitle>히스토리 상세</SheetTitle>
             <SheetDescription>
-              원본 이미지와 편집된 이미지를 비교하고 상세 정보를 확인할 수 있습니다.
+              원본 이미지와 편집된 이미지를 비교하고 상세 정보를 확인할 수
+              있습니다.
             </SheetDescription>
           </SheetHeader>
 
@@ -761,7 +770,9 @@ const Dashboard: React.FC = () => {
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-5xl w-full h-[80vh] flex flex-col p-2 gap-2">
           <DialogHeader className="pb-0">
-            <DialogTitle className="text-base">{lightboxImage?.title}</DialogTitle>
+            <DialogTitle className="text-base">
+              {lightboxImage?.title}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="relative flex-1 flex items-center justify-center bg-muted/30 rounded-lg overflow-hidden min-h-0">
@@ -824,7 +835,9 @@ const Dashboard: React.FC = () => {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => downloadImage(lightboxImage?.url, lightboxImage?.title)}
+                onClick={() =>
+                  downloadImage(lightboxImage?.url, lightboxImage?.title)
+                }
               >
                 <Download className="w-4 h-4 mr-2" />
                 다운로드
