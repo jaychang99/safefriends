@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
+import usePageTitle from "@/hooks/usePageTitle";
 
 type PlanId = "basic" | "pro" | "enterprise";
 
@@ -96,6 +97,8 @@ const Billing: React.FC = () => {
   const usageLimit = currentPlan === "pro" ? 500 : 50;
   const used = 28;
   const aiEdits = currentPlan === "pro" ? 22 : 6;
+
+  usePageTitle("요금제 & 청구");
 
   const handlePlanSelect = (plan: Plan) => {
     if (plan.id === "enterprise") {

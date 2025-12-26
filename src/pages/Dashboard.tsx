@@ -56,6 +56,7 @@ import {
   HistoryItem,
   isUsingMockHistoryApi,
 } from '@/lib/history';
+import usePageTitle from '@/hooks/usePageTitle';
 
 type FilterTab = FilterType | 'ALL';
 type CategoryTab = DetectCategory | 'ALL';
@@ -98,6 +99,8 @@ const Dashboard: React.FC = () => {
   const [thumbFallback, setThumbFallback] = useState<Record<number, boolean>>(
     {},
   );
+
+  usePageTitle('히스토리 대시보드');
 
   const historyQuery = useQuery({
     queryKey: ['history', memberId],
