@@ -161,8 +161,12 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
           <h2 className="hidden lg:block text-xl font-bold text-foreground">편집 옵션</h2>
           
           {/* Detection Options */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">감지할 대상</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-primary/10 text-primary text-[11px] font-semibold px-2 py-0.5">1단계</span>
+              <h3 className="text-sm font-semibold text-foreground">감지할 대상</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">필터 전에 어떤 정보를 지킬지 먼저 선택해주세요.</p>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { key: 'qr', label: 'QR/바코드' },
@@ -197,44 +201,77 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
             </div>
           </div>
 
+          {/* Analyze CTA */}
+          <div className="pt-1 lg:pt-2">
+            {!isAnalyzed ? (
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full gap-2"
+                onClick={handleAnalyze}
+                disabled={isAnalyzing}
+              >
+                <Scan className="w-5 h-5" />
+                AI 안심 분석 시작
+              </Button>
+            ) : (
+              <div className="flex items-start gap-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-primary">
+                <Check className="w-5 h-5 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold">AI 안심 분석 완료</p>
+                  <p className="text-xs text-primary/80">이제 감지된 영역에 적용할 필터 방식을 선택하세요.</p>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Filter Type */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">필터 방식</h3>
-            <div className="flex flex-col lg:flex-col gap-2">
-              {[
-                { key: 'blur', label: '블러' },
-                { key: 'mosaic', label: '모자이크' },
-                { key: 'ai-remove', label: 'AI 자연스럽게 지우기', pro: true, description: '자연스럽게 복원하는 프리미엄 필터' },
-              ].map((option) => (
-                <button
-                  key={option.key}
-                  onClick={() => option.pro ? setIsPricingOpen(true) : setFilterType(option.key as FilterType)}
-                  className={`flex-1 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all text-left ${
-                    filterType === option.key && !option.pro
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : option.pro
-                        ? 'bg-primary/5 border-primary/40 text-primary hover:border-primary/60 hover:bg-primary/10'
-                        : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{option.label}</span>
-                    {option.pro && (
-                      <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-[10px] font-bold tracking-wide">
-                        <Crown className="w-3 h-3" />
-                        PRO
-                      </span>
-                    )}
-                  </div>
-                  {option.pro && (
-                    <div className="mt-1.5 flex items-center gap-2 text-xs text-primary">
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>{option.description}</span>
-                    </div>
-                  )}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 mb-2 mt-2">
+              <span className="rounded-full bg-primary/10 text-primary text-[11px] font-semibold px-2 py-0.5">2단계</span>
+              <h3 className="text-sm font-semibold text-foreground">필터 방식</h3>
             </div>
+            {!isAnalyzed ? (
+              <div className="rounded-xl border border-dashed border-muted px-4 py-3 text-sm text-muted-foreground bg-muted/30">
+                AI 분석 후에 필터 방식을 고를 수 있어요.
+              </div>
+            ) : (
+              <div className="flex flex-col lg:flex-col gap-2">
+                {[
+                  { key: 'blur', label: '블러' },
+                  { key: 'mosaic', label: '모자이크' },
+                  { key: 'ai-remove', label: 'AI 자연스럽게 지우기', pro: true, description: '자연스럽게 복원하는 프리미엄 필터' },
+                ].map((option) => (
+                  <button
+                    key={option.key}
+                    onClick={() => option.pro ? setIsPricingOpen(true) : setFilterType(option.key as FilterType)}
+                    className={`flex-1 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all text-left ${
+                      filterType === option.key && !option.pro
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : option.pro
+                          ? 'bg-primary/5 border-primary/40 text-primary hover:border-primary/60 hover:bg-primary/10'
+                          : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{option.label}</span>
+                      {option.pro && (
+                        <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground px-2 py-0.5 text-[10px] font-bold tracking-wide">
+                          <Crown className="w-3 h-3" />
+                          PRO
+                        </span>
+                      )}
+                    </div>
+                    {option.pro && (
+                      <div className="mt-1.5 flex items-center gap-2 text-xs text-primary">
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>{option.description}</span>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Detection List - Desktop only */}
@@ -264,20 +301,9 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
             </div>
           )}
 
-          {/* Action Button */}
-          <div className="pt-2 lg:pt-4">
-            {!isAnalyzed ? (
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full gap-2"
-                onClick={handleAnalyze}
-                disabled={isAnalyzing}
-              >
-                <Scan className="w-5 h-5" />
-                AI 안심 분석 시작
-              </Button>
-            ) : (
+          {/* Actions after filter selection */}
+          {isAnalyzed && (
+            <div className="pt-2 lg:pt-4">
               <div className="flex gap-3">
                 <Button
                   variant="secondary"
@@ -303,8 +329,8 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
                   저장
                 </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
