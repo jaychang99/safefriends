@@ -10,7 +10,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ showBack, onBack, title, rightContent }) => {
   return (
-    <header className="flex items-center justify-between px-5 py-3 bg-card/80 backdrop-blur-md border-b border-border/50">
+    <header className="sticky top-0 inset-x-0 z-40 flex items-center justify-between px-5 py-3 bg-card/80 backdrop-blur-md border-b border-border/50">
       <div className="w-10">
         {showBack && (
           <button 
