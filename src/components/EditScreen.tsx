@@ -10,6 +10,7 @@ import {
   Crown,
   Lock,
   Loader2,
+  MoveHorizontal,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -64,6 +65,8 @@ const filterOptionToApi: Record<FilterOption, ApiFilterType> = {
   'ai-remove': 'AI',
 };
 
+const COMPARE_GRADIENT_WIDTH = 100;
+
 const memberIdDefault = 1;
 
 const EditScreen: React.FC<EditScreenProps> = ({
@@ -91,6 +94,12 @@ const EditScreen: React.FC<EditScreenProps> = ({
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [detections, setDetections] = useState<DetectionBox[]>([]);
   const [filterType, setFilterType] = useState<FilterOption>('blur');
+  const [compareImages, setCompareImages] = useState<{
+    oldUrl: string;
+    newUrl: string;
+  } | null>(null);
+  const [isComparing, setIsComparing] = useState(false);
+  const [comparePosition, setComparePosition] = useState(50);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isProUnlocked, setIsProUnlocked] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState({
@@ -169,6 +178,14 @@ const EditScreen: React.FC<EditScreenProps> = ({
   const editMutation = useMutation({
     mutationFn: requestEdit,
     onSuccess: (data) => {
+      const previousUrl =
+        data.oldUrl ?? displayedImageUrl ?? uploadResult.previewUrl;
+      if (data.newUrl) {
+        setCompareImages({ oldUrl: previousUrl, newUrl: data.newUrl });
+        setComparePosition(50);
+        setIsComparing(true);
+      }
+
       setDisplayedImageUrl(data.newUrl ?? displayedImageUrl);
       setActiveImageUuid(data.newUuid ?? activeImageUuid);
       if (data.newUrl) {
@@ -222,6 +239,37 @@ const EditScreen: React.FC<EditScreenProps> = ({
         description: '잠시 후 다시 시도해주세요.',
       });
     }
+  };
+
+  const updateComparePosition = (clientX: number) => {
+    const container = imageContainerRef.current?.getBoundingClientRect();
+    if (!container) return;
+
+    const relativeX = Math.min(
+      Math.max(clientX - container.left, 0),
+      container.width,
+    );
+    const position = (relativeX / container.width) * 100;
+    setComparePosition(position);
+  };
+
+  const startCompareDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsComparing(true);
+    updateComparePosition(event.clientX);
+
+    const handleMove = (moveEvent: PointerEvent) => {
+      updateComparePosition(moveEvent.clientX);
+    };
+
+    const handleUp = () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
   };
 
   const toggleDetection = (id: string) => {
@@ -466,6 +514,52 @@ const EditScreen: React.FC<EditScreenProps> = ({
             });
           }}
         />
+
+        {compareImages && isComparing && (
+          <div className="absolute inset-0 z-30 pointer-events-none select-none">
+            <img
+              src={compareImages.oldUrl}
+              alt="이전 이미지"
+              className="w-full h-full max-h-screen object-cover absolute inset-0"
+              style={{
+                clipPath: `inset(0 ${100 - comparePosition}% 0 0)`,
+              }}
+            />
+
+            <div
+              className="absolute inset-y-0"
+              style={{
+                left: `calc(${comparePosition}% - ${COMPARE_GRADIENT_WIDTH}px)`,
+                width: `${COMPARE_GRADIENT_WIDTH}px`,
+              }}
+            >
+              <div
+                className="absolute inset-y-0 left-0 pointer-events-none"
+                style={{
+                  width: `${COMPARE_GRADIENT_WIDTH}px`,
+                  background:
+                    'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(107,114,128,0.5) 100%)',
+                }}
+              />
+              <div className="absolute top-1/2 left-full -translate-x-1/2 -translate-y-1/2">
+                <div
+                  role="slider"
+                  aria-label="신/구 이미지 비교"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(comparePosition)}
+                  className="pointer-events-auto cursor-ew-resize bg-primary text-primary-foreground rounded-full px-2 shadow-lg flex items-center gap-1 w-[66px] h-[30px] justify-center"
+                  onPointerDown={startCompareDrag}
+                >
+                  <MoveHorizontal className="w-4 h-4" />
+                  <span className="text-xs font-semibold leading-none">
+                    비교
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Scanning Overlay */}
         {isAnalyzing && (
@@ -739,35 +833,57 @@ const EditScreen: React.FC<EditScreenProps> = ({
           {/* Actions after filter selection */}
           {isAnalyzed && (
             <div className="pt-2 lg:pt-4">
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-2">
                 <Button
-                  variant="secondary"
+                  variant={isComparing ? 'secondary' : 'outline'}
                   size="lg"
-                  className="flex-1 gap-2"
+                  className="w-full gap-2"
                   onClick={() => {
-                    toast({
-                      title: '공유 준비 완료',
-                      description: '공유할 앱을 선택해주세요.',
-                    });
+                    if (!compareImages) {
+                      toast({
+                        title: '비교할 이미지가 없어요',
+                        description: '저장 후 신/구 이미지를 비교할 수 있어요.',
+                      });
+                      return;
+                    }
+                    setIsComparing((prev) => !prev);
                   }}
-                >
-                  <Share2 className="w-5 h-5" />
-                  공유
-                </Button>
-                <Button
-                  variant="success"
-                  size="lg"
-                  className="flex-1 gap-2"
-                  onClick={handleSave}
                   disabled={isSaving}
                 >
-                  {isSaving ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Save className="w-5 h-5" />
-                  )}
-                  {isSaving ? '저장 중...' : '저장'}
+                  <MoveHorizontal className="w-5 h-5" />
+                  {isComparing ? '비교 끄기' : '신/구 비교'}
                 </Button>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="flex-1 gap-2"
+                    onClick={() => {
+                      toast({
+                        title: '공유 준비 완료',
+                        description: '공유할 앱을 선택해주세요.',
+                      });
+                    }}
+                  >
+                    <Share2 className="w-5 h-5" />
+                    공유
+                  </Button>
+                  <Button
+                    variant="success"
+                    size="lg"
+                    className="flex-1 gap-2"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Save className="w-5 h-5" />
+                    )}
+                    {isSaving ? '저장 중...' : '저장'}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
