@@ -31,7 +31,7 @@ const SplashScreen = ({ visible }: SplashScreenProps) => {
           <Shield className="w-7 h-7 text-primary-foreground" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-primary">SafeFriends</p>
+          <p className="text-sm font-semibold text-primary">SafeLens</p>
           <p className="text-base font-medium text-foreground mt-1">잠시만 기다려 주세요</p>
           <p className="text-sm text-muted-foreground mt-1">사진을 안전하게 준비하는 중입니다.</p>
         </div>

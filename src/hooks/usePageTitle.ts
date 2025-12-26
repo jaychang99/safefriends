@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const BASE_TITLE = 'SafeFriends';
+const BASE_TITLE = 'SafeLens';
 const DEFAULT_SUFFIX = '이미지 보호 스튜디오';
 
 const buildTitle = (pageTitle?: string) => {
