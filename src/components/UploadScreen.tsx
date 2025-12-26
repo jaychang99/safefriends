@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { ImagePlus, Camera, Sparkles, History } from 'lucide-react';
+import { ImagePlus, Camera, Sparkles, History, Shield, MapPin, Scan } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from './ui/button';
@@ -91,14 +91,16 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
           {/* Features - Desktop */}
           <div className="hidden lg:grid grid-cols-3 gap-4 mt-8">
             {[
-              { icon: '🔒', label: '초상권 보호', desc: '얼굴 자동 감지' },
-              { icon: '📍', label: '위치 정보 삭제', desc: '간판/주소 블러' },
-              { icon: '🤖', label: 'AI 자동 감지', desc: '원클릭 보호' },
+              { Icon: Shield, label: '초상권 보호', desc: '얼굴 자동 감지' },
+              { Icon: MapPin, label: '위치 정보 삭제', desc: '간판/주소 블러' },
+              { Icon: Scan, label: 'AI 자동 감지', desc: '원클릭 보호' },
             ].map((feature, i) => (
-              <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-muted/50">
-                <span className="text-2xl">{feature.icon}</span>
+              <div key={i} className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border/60 bg-card shadow-sm">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <feature.Icon className="w-5 h-5 text-primary" />
+                </div>
                 <span className="text-sm font-semibold text-foreground">{feature.label}</span>
-                <span className="text-xs text-muted-foreground">{feature.desc}</span>
+                <span className="text-xs text-muted-foreground text-center">{feature.desc}</span>
               </div>
             ))}
           </div>
@@ -170,13 +172,15 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
         <div className="lg:hidden w-full mt-4">
           <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: '🔒', label: '초상권 보호' },
-              { icon: '📍', label: '위치 정보 삭제' },
-              { icon: '🤖', label: 'AI 자동 감지' },
+              { Icon: Shield, label: '초상권 보호' },
+              { Icon: MapPin, label: '위치 정보 삭제' },
+              { Icon: Scan, label: 'AI 자동 감지' },
             ].map((feature, i) => (
-              <div key={i} className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-muted/50">
-                <span className="text-xl">{feature.icon}</span>
-                <span className="text-xs font-medium text-muted-foreground">{feature.label}</span>
+              <div key={i} className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border/60 bg-card shadow-sm">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <feature.Icon className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-xs font-medium text-foreground">{feature.label}</span>
               </div>
             ))}
           </div>
