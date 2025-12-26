@@ -135,11 +135,14 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-card">
       {/* Image Container */}
-      <div ref={imageContainerRef} className="relative flex-1 lg:flex-[2] bg-foreground/5 min-h-[300px] lg:min-h-screen">
+      <div
+        ref={imageContainerRef}
+        className="relative flex-1 lg:flex-[2] bg-foreground/5 min-h-[300px] lg:min-h-screen max-h-screen overflow-hidden"
+      >
         <img
           src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80"
           alt="카페에서 노트북 작업 중인 사람"
-          className="w-full h-full object-cover"
+          className="w-full h-full max-h-screen object-cover"
         />
         
         {/* Scanning Overlay */}
