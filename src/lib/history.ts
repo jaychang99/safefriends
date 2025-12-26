@@ -47,7 +47,8 @@ export interface HistoryDetailResponse {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "https://api.example.com/v1";
 const IMAGE_BASE = import.meta.env.VITE_IMAGE_BASE_URL ?? "https://image.example.com/v1";
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+// Default to mock data unless explicitly disabled with VITE_USE_MOCK=false
+const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false";
 
 const mockHistoryResponse: HistoryResponse = {
   memberMeId: 12345,
