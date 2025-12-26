@@ -51,7 +51,7 @@ const plans: Plan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '12,000원',
+    price: '4,900원',
     priceNote: '/월',
     description: 'AI가 알아서 자연스럽게 복원',
     features: [
@@ -92,7 +92,7 @@ const Billing: React.FC = () => {
       {
         title: currentPlan === 'pro' ? 'Pro 구독 (월)' : 'Basic 이용',
         date: nextBillingDate,
-        amount: currentPlan === 'pro' ? '12,000원' : '무료',
+        amount: currentPlan === 'pro' ? '4,900원' : '무료',
       },
       {
         title: '추가 AI 편집',
@@ -208,7 +208,7 @@ const Billing: React.FC = () => {
               <p className="text-lg font-semibold text-foreground">
                 {currentPlan === 'basic'
                   ? '결제 예정 없음'
-                  : `${nextBillingDate} · 12,000원/월`}
+                  : `${nextBillingDate} · 4,900원/월`}
               </p>
               <p className="text-xs text-muted-foreground">
                 플랜 변경 시 다음 주기부터 반영

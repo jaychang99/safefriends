@@ -1162,7 +1162,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
               },
               {
                 name: 'Pro',
-                price: '12,000원',
+                price: '4,900원',
                 period: '/월',
                 description: 'AI가 알아서 자연스럽게 복원',
                 features: [
