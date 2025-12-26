@@ -92,6 +92,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
   const [detections, setDetections] = useState<DetectionBox[]>([]);
   const [filterType, setFilterType] = useState<FilterOption>('blur');
   const [isPricingOpen, setIsPricingOpen] = useState(false);
+  const [isProUnlocked, setIsProUnlocked] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState({
     qr: false,
     personal: false,
@@ -392,6 +393,15 @@ const EditScreen: React.FC<EditScreenProps> = ({
 
   const isAnalyzing = detectMutation.isPending;
   const isSaving = editMutation.isPending;
+  const handleProUpgrade = () => {
+    setIsProUnlocked(true);
+    setFilterType('ai-remove');
+    setIsPricingOpen(false);
+    toast({
+      title: 'Pro 플랜이 활성화되었어요',
+      description: 'AI 자연스럽게 지우기 필터를 바로 사용해보세요.',
+    });
+  };
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-card">
@@ -621,15 +631,17 @@ const EditScreen: React.FC<EditScreenProps> = ({
                 ].map((option) => (
                   <button
                     key={option.key}
-                    onClick={() =>
-                      option.pro
-                        ? setIsPricingOpen(true)
-                        : setFilterType(option.key as FilterOption)
-                    }
+                    onClick={() => {
+                      if (option.pro && !isProUnlocked) {
+                        setIsPricingOpen(true);
+                        return;
+                      }
+                      setFilterType(option.key as FilterOption);
+                    }}
                     className={`flex-1 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all text-left ${
-                      filterType === option.key && !option.pro
+                      filterType === option.key
                         ? 'bg-primary text-primary-foreground border-primary'
-                        : option.pro
+                        : option.pro && !isProUnlocked
                         ? 'bg-primary/5 border-primary/40 text-primary hover:border-primary/60 hover:bg-primary/10'
                         : 'bg-muted/50 text-muted-foreground border-transparent hover:bg-muted'
                     }`}
@@ -828,6 +840,10 @@ const EditScreen: React.FC<EditScreenProps> = ({
                   size="lg"
                   disabled={plan.disabled}
                   onClick={() => {
+                    if (plan.name === 'Pro') {
+                      handleProUpgrade();
+                      return;
+                    }
                     toast({
                       title: `${plan.name} 플랜 문의가 접수되었어요.`,
                       description: '담당자가 곧 안내드릴게요.',
