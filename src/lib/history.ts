@@ -1,28 +1,27 @@
 import { QueryFunction } from "@tanstack/react-query";
-
-export type FilterType = "BLUR" | "MOSAIC" | "AI";
-
-export type DetectCategory =
-  | "QRBARCODE"
-  | "TEXT"
-  | "LOCATION"
-  | "FACE"
-  | "ETC";
+import {
+  apiClient,
+  DetectCategory,
+  FilterType,
+  DetectionRegion,
+} from "./api";
 
 export interface Detection {
-  detectId: number;
+  detectId?: number;
   category: DetectCategory;
   x: number;
   y: number;
   width: number;
   height: number;
-  confidence: number;
+  confidence?: number;
 }
 
 export interface HistoryItem {
   historyId: number;
   oldUuid: string;
   newUuid: string;
+  oldUrl?: string;
+  newUrl?: string;
   filter: FilterType;
   createdAt: string;
   detections: Detection[];
@@ -39,16 +38,20 @@ export interface HistoryDetailResponse {
   historyId: number;
   memberId: number;
   imageUuid: string;
-  editedImageUrl: string;
+  editedImageUrl?: string;
+  oldUuid?: string;
+  newUuid?: string;
   filter: FilterType;
   createdAt: string;
   detections: Detection[];
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "https://api.example.com/v1";
-const IMAGE_BASE = import.meta.env.VITE_IMAGE_BASE_URL ?? "https://image.example.com/v1";
-// Default to mock data unless explicitly disabled with VITE_USE_MOCK=false
-const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false";
+const IMAGE_BASE =
+  import.meta.env.VITE_IMAGE_BASE_URL ??
+  (apiClient.defaults.baseURL ? `${apiClient.defaults.baseURL}/images` : "");
+
+// Mock data can be opted into with VITE_USE_MOCK=true
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 const mockHistoryResponse: HistoryResponse = {
   memberMeId: 12345,
@@ -207,7 +210,9 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const buildImageUrl = (uuid: string, type: "original" | "edited") => {
   const suffix = type === "edited" ? "edited" : "original";
-  return `${IMAGE_BASE}/${suffix}/${uuid}.jpg`;
+  const base = (IMAGE_BASE ?? "").replace(/\/$/, "");
+  const prefix = base ? `${base}/` : "/";
+  return `${prefix}${suffix}/${uuid}.jpg`;
 };
 
 export const isUsingMockHistoryApi = USE_MOCK;
@@ -222,13 +227,9 @@ export const fetchHistory: QueryFunction<HistoryResponse, ["history", number]> =
     return mockHistoryResponse;
   }
 
-  const response = await fetch(`${API_BASE}/history/${memberId}`);
+  const response = await apiClient.get<HistoryResponse>(`/history/${memberId}`);
 
-  if (!response.ok) {
-    throw new Error("Failed to load history data");
-  }
-
-  return response.json();
+  return response.data;
 };
 
 export const fetchHistoryDetail: QueryFunction<
@@ -242,11 +243,12 @@ export const fetchHistoryDetail: QueryFunction<
     return { ...mockHistoryDetail, historyId };
   }
 
-  const response = await fetch(`${API_BASE}/history/detail/${historyId}`);
+  const response = await apiClient.get<HistoryDetailResponse>(
+    `/history/detail/${historyId}`,
+  );
 
-  if (!response.ok) {
-    throw new Error("Failed to load history detail");
-  }
-
-  return response.json();
+  return response.data;
 };
+
+// Re-export for downstream imports
+export type { DetectCategory, FilterType, DetectionRegion };

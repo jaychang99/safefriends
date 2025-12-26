@@ -124,12 +124,18 @@ const Dashboard: React.FC = () => {
     `https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&auto=format&fit=crop&q=60&sig=${seed}`;
 
   const getThumbSrc = (item: HistoryItem) =>
-    thumbFallback[item.historyId] ? fallbackThumbUrl(item.historyId) : buildImageUrl(item.newUuid, "edited");
+    thumbFallback[item.historyId]
+      ? fallbackThumbUrl(item.historyId)
+      : item.newUrl ?? buildImageUrl(item.newUuid, "edited");
 
   const renderDetectionBadges = (item: HistoryItem) => (
     <div className="flex flex-wrap gap-2">
       {item.detections.map((det) => (
-        <Badge key={det.detectId} className={categoryTone[det.category]} variant="outline">
+        <Badge
+          key={det.detectId ?? `${det.category}-${det.x}-${det.y}`}
+          className={categoryTone[det.category]}
+          variant="outline"
+        >
           {categoryLabels[det.category]}
         </Badge>
       ))}
@@ -386,6 +392,35 @@ const Dashboard: React.FC = () => {
 
           {detailQuery.data && activeDetail && (
             <div className="mt-4 space-y-4">
+              {(() => {
+                const original =
+                  activeDetail.oldUrl ??
+                  (detailQuery.data.imageUuid
+                    ? buildImageUrl(detailQuery.data.imageUuid, "original")
+                    : buildImageUrl(activeDetail.oldUuid, "original"));
+                const edited =
+                  detailQuery.data.editedImageUrl ??
+                  activeDetail.newUrl ??
+                  buildImageUrl(activeDetail.newUuid, "edited");
+
+                return (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border bg-muted/30 p-2">
+                      <p className="text-xs text-muted-foreground mb-2">원본</p>
+                      <AspectRatio ratio={4 / 3} className="overflow-hidden rounded-lg bg-background">
+                        <img src={original} alt="원본 이미지" className="h-full w-full object-cover" />
+                      </AspectRatio>
+                    </div>
+                    <div className="rounded-xl border bg-muted/30 p-2">
+                      <p className="text-xs text-muted-foreground mb-2">편집본</p>
+                      <AspectRatio ratio={4 / 3} className="overflow-hidden rounded-lg bg-background">
+                        <img src={edited} alt="편집된 이미지" className="h-full w-full object-cover" />
+                      </AspectRatio>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">편집 ID</p>
@@ -400,29 +435,6 @@ const Dashboard: React.FC = () => {
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border bg-muted/30 p-2">
-                  <p className="text-xs text-muted-foreground mb-2">원본</p>
-                  <AspectRatio ratio={4 / 3} className="overflow-hidden rounded-lg bg-background">
-                    <img
-                      src={buildImageUrl(activeDetail.oldUuid, "original")}
-                      alt="원본 이미지"
-                      className="h-full w-full object-cover"
-                    />
-                  </AspectRatio>
-                </div>
-                <div className="rounded-xl border bg-muted/30 p-2">
-                  <p className="text-xs text-muted-foreground mb-2">편집본</p>
-                  <AspectRatio ratio={4 / 3} className="overflow-hidden rounded-lg bg-background">
-                    <img
-                      src={buildImageUrl(activeDetail.newUuid, "edited")}
-                      alt="편집된 이미지"
-                      className="h-full w-full object-cover"
-                    />
-                  </AspectRatio>
-                </div>
-              </div>
-
               <div className="rounded-xl border border-border/60 bg-card">
                 <div className="flex items-center gap-2 border-b px-4 py-3 text-sm font-semibold">
                   <ShieldCheck className="w-4 h-4 text-primary" />
@@ -431,7 +443,10 @@ const Dashboard: React.FC = () => {
                 <ScrollArea className="max-h-56">
                   <div className="divide-y">
                     {detailQuery.data.detections.map((det) => (
-                      <div key={det.detectId} className="flex items-start justify-between px-4 py-3">
+                      <div
+                        key={det.detectId ?? `${det.category}-${det.x}-${det.y}`}
+                        className="flex items-start justify-between px-4 py-3"
+                      >
                         <div className="space-y-1">
                           <Badge className={categoryTone[det.category]} variant="outline">
                             {categoryLabels[det.category]}
@@ -440,9 +455,11 @@ const Dashboard: React.FC = () => {
                             위치: x{det.x}, y{det.y} · 크기: {det.width}×{det.height}
                           </p>
                         </div>
-                        <span className="text-xs text-foreground font-semibold">
-                          신뢰도 {(det.confidence * 100).toFixed(1)}%
-                        </span>
+                        {typeof det.confidence === "number" && (
+                          <span className="text-xs text-foreground font-semibold">
+                            신뢰도 {(det.confidence * 100).toFixed(1)}%
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>

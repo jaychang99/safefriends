@@ -1,17 +1,26 @@
 import React, { useRef, useState } from 'react';
-import { Check, Scan, Save, Share2, Eye, EyeOff, Crown, Lock } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Check, Scan, Save, Share2, Eye, EyeOff, Crown, Lock, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { toast } from '@/hooks/use-toast';
+import { DetectCategory, FilterType as ApiFilterType, requestDetect, requestEdit } from '@/lib/api';
 
 interface EditScreenProps {
   onBack: () => void;
+  uploadResult: {
+    imageUuid: string;
+    previewUrl: string;
+    fileName?: string;
+  };
+  memberId?: number;
 }
 
-type FilterType = 'blur' | 'mosaic' | 'ai-remove';
+type FilterOption = 'blur' | 'mosaic' | 'ai-remove';
 
 interface DetectionBox {
   id: string;
+  category: DetectCategory;
   label: string;
   x: number;
   y: number;
@@ -20,17 +29,31 @@ interface DetectionBox {
   isActive: boolean;
 }
 
-const MOCK_DETECTIONS: DetectionBox[] = [
-  { id: '1', label: '얼굴', x: 42, y: 15, width: 18, height: 12, isActive: true },
-  { id: '2', label: '화면', x: 30, y: 45, width: 40, height: 25, isActive: true },
-];
+const CATEGORY_LABELS: Record<DetectCategory, string> = {
+  QRBARCODE: 'QR/바코드',
+  TEXT: '개인정보 텍스트',
+  LOCATION: '지역 정보',
+  FACE: '얼굴',
+  ETC: '기타',
+};
 
-const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
+const filterOptionToApi: Record<FilterOption, ApiFilterType> = {
+  blur: 'BLUR',
+  mosaic: 'MOSAIC',
+  'ai-remove': 'AI',
+};
+
+const memberIdDefault = 12345;
+
+const EditScreen: React.FC<EditScreenProps> = ({ onBack, uploadResult, memberId = memberIdDefault }) => {
+  const queryClient = useQueryClient();
   const imageContainerRef = useRef<HTMLDivElement>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
+  const [activeImageUuid, setActiveImageUuid] = useState(uploadResult.imageUuid);
+  const [displayedImageUrl, setDisplayedImageUrl] = useState(uploadResult.previewUrl);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const [detections, setDetections] = useState<DetectionBox[]>([]);
-  const [filterType, setFilterType] = useState<FilterType>('blur');
+  const [filterType, setFilterType] = useState<FilterOption>('blur');
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState({
     qr: false,
@@ -39,26 +62,69 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
     portrait: true,
   });
 
-  const handleAnalyze = () => {
-    setIsAnalyzing(true);
-    setTimeout(() => {
-      setIsAnalyzing(false);
+  const detectMutation = useMutation({
+    mutationFn: requestDetect,
+    onSuccess: (data) => {
+      if (!imageSize) return;
+      const mapped = data.detections.map((det, idx) => {
+        const widthPercent = Math.min(100, (det.width / imageSize.width) * 100);
+        const heightPercent = Math.min(100, (det.height / imageSize.height) * 100);
+        const xPercent = Math.min(100 - widthPercent, Math.max(0, (det.x / imageSize.width) * 100));
+        const yPercent = Math.min(100 - heightPercent, Math.max(0, (det.y / imageSize.height) * 100));
+
+        return {
+          id: `${det.category}-${idx}-${det.x}-${det.y}`,
+          category: det.category,
+          label: CATEGORY_LABELS[det.category],
+          x: xPercent,
+          y: yPercent,
+          width: widthPercent,
+          height: heightPercent,
+          isActive: true,
+        };
+      });
+
+      setDetections(mapped);
       setIsAnalyzed(true);
-      setDetections(MOCK_DETECTIONS);
-    }, 2000);
-  };
+
+      toast({
+        title: '분석 완료',
+        description: `${data.totalDetections ?? mapped.length}개의 개인정보 영역을 찾았어요.`,
+      });
+    },
+    onError: () => {
+      toast({
+        variant: 'destructive',
+        title: '분석에 실패했어요',
+        description: '네트워크를 확인하고 다시 시도해주세요.',
+      });
+    },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: requestEdit,
+    onSuccess: (data) => {
+      setDisplayedImageUrl(data.newUrl ?? displayedImageUrl);
+      setActiveImageUuid(data.newUuid ?? activeImageUuid);
+      toast({
+        title: '✨ 저장 완료!',
+        description: '안심 사진이 생성되었어요.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['history', memberId] });
+    },
+    onError: () => {
+      toast({
+        variant: 'destructive',
+        title: '저장에 실패했어요',
+        description: '잠시 후 다시 시도해주세요.',
+      });
+    },
+  });
 
   const toggleDetection = (id: string) => {
     setDetections(prev => 
       prev.map(d => d.id === id ? { ...d, isActive: !d.isActive } : d)
     );
-  };
-
-  const handleSave = () => {
-    toast({
-      title: "✨ 저장 완료!",
-      description: "안심 사진이 앨범에 저장되었습니다.",
-    });
   };
 
   const getFilterStyle = (isActive: boolean): React.CSSProperties => {
@@ -132,6 +198,100 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
     window.addEventListener('pointerup', handlePointerUp);
   };
 
+  const detectTargets: DetectCategory[] = Object.entries(selectedOptions)
+    .filter(([, enabled]) => enabled)
+    .map(([key]) => {
+      switch (key) {
+        case 'qr':
+          return 'QRBARCODE';
+        case 'personal':
+          return 'TEXT';
+        case 'location':
+          return 'LOCATION';
+        default:
+          return 'FACE';
+      }
+    });
+
+  const handleAnalyze = () => {
+    if (!detectTargets.length) {
+      toast({
+        title: '감지할 대상을 선택해주세요',
+        description: '최소 1개 이상 감지 옵션을 선택해야 해요.',
+      });
+      return;
+    }
+
+    if (!imageSize) {
+      toast({
+        variant: 'destructive',
+        title: '이미지 로딩 중이에요',
+        description: '이미지가 로드된 후 다시 시도해주세요.',
+      });
+      return;
+    }
+
+    setIsAnalyzed(false);
+    setDetections([]);
+    detectMutation.mutate({
+      imageUuid: activeImageUuid,
+      detectTargets,
+    });
+  };
+
+  const buildRegionsPayload = () => {
+    if (!imageSize) return [];
+
+    return detections
+      .filter((d) => d.isActive)
+      .map((d) => ({
+        category: d.category,
+        x: Math.round((d.x / 100) * imageSize.width),
+        y: Math.round((d.y / 100) * imageSize.height),
+        width: Math.round((d.width / 100) * imageSize.width),
+        height: Math.round((d.height / 100) * imageSize.height),
+      }));
+  };
+
+  const handleSave = () => {
+    if (!isAnalyzed) {
+      toast({
+        title: '먼저 감지를 실행해주세요',
+        description: 'AI 분석을 완료해야 필터를 적용할 수 있어요.',
+      });
+      return;
+    }
+
+    if (!imageSize) {
+      toast({
+        variant: 'destructive',
+        title: '이미지 정보를 불러오지 못했어요',
+        description: '이미지를 다시 불러오고 시도해주세요.',
+      });
+      return;
+    }
+
+    const regions = buildRegionsPayload();
+
+    if (!regions.length) {
+      toast({
+        title: '적용할 영역이 없어요',
+        description: '보호할 영역을 켜거나 감지를 다시 실행해주세요.',
+      });
+      return;
+    }
+
+    editMutation.mutate({
+      imageUuid: activeImageUuid,
+      memberId,
+      regions,
+      filter: filterOptionToApi[filterType],
+    });
+  };
+
+  const isAnalyzing = detectMutation.isPending;
+  const isSaving = editMutation.isPending;
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-card">
       {/* Image Container */}
@@ -140,9 +300,15 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
         className="relative flex-1 lg:flex-[2] bg-foreground/5 min-h-[300px] lg:min-h-screen max-h-screen overflow-hidden"
       >
         <img
-          src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80"
-          alt="카페에서 노트북 작업 중인 사람"
+          src={displayedImageUrl}
+          alt={uploadResult.fileName ?? '업로드한 이미지'}
           className="w-full h-full max-h-screen object-cover"
+          onLoad={(event) =>
+            setImageSize({
+              width: event.currentTarget.naturalWidth,
+              height: event.currentTarget.naturalHeight,
+            })
+          }
         />
         
         {/* Scanning Overlay */}
@@ -211,7 +377,17 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
         <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mt-3 lg:hidden" />
         
         <div className="px-5 lg:px-6 py-4 lg:py-8 space-y-5 lg:space-y-6 pb-8">
-          <h2 className="hidden lg:block text-xl font-bold text-foreground">편집 옵션</h2>
+          <div className="hidden lg:flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground">편집 옵션</h2>
+            <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={onBack}>
+              돌아가기
+            </Button>
+          </div>
+          <div className="lg:hidden">
+            <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={onBack}>
+              돌아가기
+            </Button>
+          </div>
           
           {/* Detection Options */}
           <div className="space-y-2">
@@ -264,8 +440,8 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
                 onClick={handleAnalyze}
                 disabled={isAnalyzing}
               >
-                <Scan className="w-5 h-5" />
-                AI 안심 분석 시작
+                {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Scan className="w-5 h-5" />}
+                {isAnalyzing ? '분석 중...' : 'AI 안심 분석 시작'}
               </Button>
             ) : (
               <div className="flex items-start gap-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-3 text-primary">
@@ -297,7 +473,7 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
                 ].map((option) => (
                   <button
                     key={option.key}
-                    onClick={() => option.pro ? setIsPricingOpen(true) : setFilterType(option.key as FilterType)}
+                    onClick={() => option.pro ? setIsPricingOpen(true) : setFilterType(option.key as FilterOption)}
                     className={`flex-1 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all text-left ${
                       filterType === option.key && !option.pro
                         ? 'bg-primary text-primary-foreground border-primary'
@@ -377,9 +553,10 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
                   size="lg"
                   className="flex-1 gap-2"
                   onClick={handleSave}
+                  disabled={isSaving}
                 >
-                  <Save className="w-5 h-5" />
-                  저장
+                  {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                  {isSaving ? '저장 중...' : '저장'}
                 </Button>
               </div>
             </div>

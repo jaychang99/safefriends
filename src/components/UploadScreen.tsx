@@ -1,21 +1,26 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { ImagePlus, Camera, Sparkles, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { Button } from './ui/button';
 import Header from './Header';
 import { toast } from '@/hooks/use-toast';
+import { uploadImage } from '@/lib/api';
 
 interface UploadScreenProps {
-  onUpload: () => void;
+  onUpload: (payload: { imageUuid: string; previewUrl: string; fileName: string }) => void;
 }
 
 const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  const uploadMutation = useMutation({
+    mutationFn: uploadImage,
+  });
+
   const handleSelectFile = () => {
-    if (isUploading) return;
+    if (uploadMutation.isPending) return;
     fileInputRef.current?.click();
   };
 
@@ -23,29 +28,22 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
-
-    const formData = new FormData();
-    formData.append('image', file);
+    const previewUrl = URL.createObjectURL(file);
 
     try {
-      // 실제 업로드 시:
-      // const response = await fetch('/images/upload', {
-      //   method: 'POST',
-      //   body: formData,
-      // });
-      // if (!response.ok) throw new Error('이미지 업로드 실패');
-      // const result = await response.json();
-
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
+      const data = await uploadMutation.mutateAsync(file);
       toast({
         title: '업로드 완료!',
         description: '사진이 안전하게 업로드됐어요.',
       });
 
-      onUpload();
+      onUpload({
+        imageUuid: data.imageUuid,
+        previewUrl,
+        fileName: file.name,
+      });
     } catch (error) {
+      URL.revokeObjectURL(previewUrl);
       console.error('Upload failed', error);
       toast({
         variant: 'destructive',
@@ -53,7 +51,6 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
         description: '네트워크를 확인하고 다시 시도해주세요.',
       });
     } finally {
-      setIsUploading(false);
       event.target.value = '';
     }
   };
@@ -105,10 +102,10 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
         <div className="w-full max-w-sm lg:max-w-md">
           <button
             onClick={handleSelectFile}
-            disabled={isUploading}
+            disabled={uploadMutation.isPending}
             className="w-full aspect-square border-2 border-dashed border-primary/30 rounded-3xl flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-accent/50 to-secondary/30 hover:from-accent hover:to-secondary transition-all duration-300 hover:border-primary/50 hover:shadow-card group disabled:opacity-70"
           >
-            {isUploading ? (
+            {uploadMutation.isPending ? (
               <div className="flex flex-col items-center gap-3">
                 <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center animate-pulse-soft">
                   <ImagePlus className="w-8 h-8 text-primary-foreground" />
@@ -145,7 +142,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
               variant="secondary"
               size="sm"
               onClick={handleSelectFile}
-              disabled={isUploading}
+              disabled={uploadMutation.isPending}
               className="gap-2"
             >
               <Camera className="w-4 h-4" />
