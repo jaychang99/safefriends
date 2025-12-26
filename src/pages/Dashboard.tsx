@@ -1,11 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   AlertCircle,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   CreditCard,
+  Download,
   ExternalLink,
   Filter,
   Loader2,
@@ -27,6 +30,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -99,6 +109,15 @@ const Dashboard: React.FC = () => {
   const [thumbFallback, setThumbFallback] = useState<Record<number, boolean>>(
     {},
   );
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<{
+    url: string;
+    title: string;
+    type: 'original' | 'edited' | 'thumbnail';
+    historyId?: number;
+  } | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
 
   usePageTitle('히스토리 대시보드');
 
@@ -164,24 +183,117 @@ const Dashboard: React.FC = () => {
       ? fallbackThumbUrl(item.historyId)
       : item.newUrl ?? buildImageUrl(item.newUuid, 'edited');
 
-  const renderDetectionBadges = (item: HistoryItem) => (
-    <div className="flex flex-wrap gap-2">
-      {item.detections.map((det) => (
-        <Badge
-          key={det.detectId ?? `${det.category}-${det.x}-${det.y}`}
-          className={categoryTone[det.category]}
-          variant="outline"
-        >
-          {categoryLabels[det.category]}
-        </Badge>
-      ))}
-    </div>
-  );
+  const addQualityParam = (url: string, quality: 'low' | 'high') => {
+    try {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('quality', quality);
+      return urlObj.toString();
+    } catch {
+      // URL 파싱 실패 시 원본 반환
+      return url;
+    }
+  };
+
+  const downloadImage = async (url?: string, filename?: string) => {
+    if (!url) return;
+
+    try {
+      // 다운로드는 항상 high 품질로
+      const highQualityUrl = addQualityParam(url, 'high');
+      const response = await fetch(highQualityUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename || 'safefriends-image.jpg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Failed to download image:', error);
+    }
+  };
+
+  const goToPrevImage = () => {
+    if (currentImageIndex === null || currentImageIndex <= 0) return;
+
+    setImageLoading(true);
+    const newIndex = currentImageIndex - 1;
+    const prevItem = sortedFilteredHistories[newIndex];
+    setCurrentImageIndex(newIndex);
+    setLightboxImage({
+      url: addQualityParam(getThumbSrc(prevItem), 'low'),
+      title: `편집 #${prevItem.historyId}`,
+      type: 'thumbnail',
+      historyId: prevItem.historyId,
+    });
+  };
+
+  const goToNextImage = () => {
+    if (
+      currentImageIndex === null ||
+      currentImageIndex >= sortedFilteredHistories.length - 1
+    )
+      return;
+
+    setImageLoading(true);
+    const newIndex = currentImageIndex + 1;
+    const nextItem = sortedFilteredHistories[newIndex];
+    setCurrentImageIndex(newIndex);
+    setLightboxImage({
+      url: addQualityParam(getThumbSrc(nextItem), 'low'),
+      title: `편집 #${nextItem.historyId}`,
+      type: 'thumbnail',
+      historyId: nextItem.historyId,
+    });
+  };
+
+  const renderDetectionBadges = (item: HistoryItem) => {
+    // 카테고리별 개수 계산
+    const categoryCounts = item.detections.reduce((acc, det) => {
+      acc[det.category] = (acc[det.category] || 0) + 1;
+      return acc;
+    }, {} as Record<DetectCategory, number>);
+
+    // 카테고리를 정렬된 순서로 표시
+    const sortedCategories = Object.entries(categoryCounts) as [DetectCategory, number][];
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {sortedCategories.map(([category, count]) => (
+          <Badge
+            key={category}
+            className={categoryTone[category]}
+            variant="outline"
+          >
+            {categoryLabels[category]}
+            {count > 1 && ` × ${count}`}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
 
   const emptyState =
     historyQuery.isLoading ||
     historyQuery.isError ||
     sortedFilteredHistories.length === 0;
+
+  useEffect(() => {
+    if (!lightboxOpen || currentImageIndex === null) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        goToPrevImage();
+      } else if (e.key === 'ArrowRight') {
+        goToNextImage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxOpen, currentImageIndex, sortedFilteredHistories]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary/10 via-background to-background">
@@ -397,7 +509,23 @@ const Dashboard: React.FC = () => {
                             className="hover:bg-primary/5"
                           >
                             <TableCell>
-                              <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/30">
+                              <div
+                                className="overflow-hidden rounded-xl border border-border/60 bg-muted/30 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => {
+                                  const index = sortedFilteredHistories.findIndex(
+                                    (h) => h.historyId === item.historyId,
+                                  );
+                                  setImageLoading(true);
+                                  setCurrentImageIndex(index);
+                                  setLightboxImage({
+                                    url: addQualityParam(getThumbSrc(item), 'low'),
+                                    title: `편집 #${item.historyId}`,
+                                    type: 'thumbnail',
+                                    historyId: item.historyId,
+                                  });
+                                  setLightboxOpen(true);
+                                }}
+                              >
                                 <AspectRatio ratio={4 / 3} className="bg-muted">
                                   <img
                                     src={getThumbSrc(item)}
@@ -493,7 +621,23 @@ const Dashboard: React.FC = () => {
 
                 return (
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-xl border bg-muted/30 p-2">
+                    <div
+                      className="rounded-xl border bg-muted/30 p-2 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => {
+                        const index = sortedFilteredHistories.findIndex(
+                          (h) => h.historyId === activeDetail.historyId,
+                        );
+                        setImageLoading(true);
+                        setCurrentImageIndex(index);
+                        setLightboxImage({
+                          url: addQualityParam(original, 'low'),
+                          title: `편집 #${activeDetail.historyId}`,
+                          type: 'thumbnail',
+                          historyId: activeDetail.historyId,
+                        });
+                        setLightboxOpen(true);
+                      }}
+                    >
                       <p className="text-xs text-muted-foreground mb-2">원본</p>
                       <AspectRatio
                         ratio={4 / 3}
@@ -506,7 +650,23 @@ const Dashboard: React.FC = () => {
                         />
                       </AspectRatio>
                     </div>
-                    <div className="rounded-xl border bg-muted/30 p-2">
+                    <div
+                      className="rounded-xl border bg-muted/30 p-2 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => {
+                        const index = sortedFilteredHistories.findIndex(
+                          (h) => h.historyId === activeDetail.historyId,
+                        );
+                        setImageLoading(true);
+                        setCurrentImageIndex(index);
+                        setLightboxImage({
+                          url: addQualityParam(edited, 'low'),
+                          title: `편집 #${activeDetail.historyId}`,
+                          type: 'thumbnail',
+                          historyId: activeDetail.historyId,
+                        });
+                        setLightboxOpen(true);
+                      }}
+                    >
                       <p className="text-xs text-muted-foreground mb-2">
                         편집본
                       </p>
@@ -596,6 +756,90 @@ const Dashboard: React.FC = () => {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Image Lightbox */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogContent className="max-w-5xl w-full h-[80vh] flex flex-col p-2 gap-2">
+          <DialogHeader className="pb-0">
+            <DialogTitle className="text-base">{lightboxImage?.title}</DialogTitle>
+          </DialogHeader>
+
+          <div className="relative flex-1 flex items-center justify-center bg-muted/30 rounded-lg overflow-hidden min-h-0">
+            {/* 이전 버튼 */}
+            {currentImageIndex !== null && currentImageIndex > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-background/80 hover:bg-background shadow-lg"
+                onClick={goToPrevImage}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </Button>
+            )}
+
+            {imageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            )}
+
+            {lightboxImage?.url && (
+              <img
+                key={lightboxImage.url}
+                src={lightboxImage.url}
+                alt={lightboxImage.title ?? '이미지'}
+                className={`max-w-full max-h-full object-contain transition-opacity duration-200 ${
+                  imageLoading ? 'opacity-0' : 'opacity-100'
+                }`}
+                onLoad={() => setImageLoading(false)}
+              />
+            )}
+
+            {/* 다음 버튼 */}
+            {currentImageIndex !== null &&
+              currentImageIndex < sortedFilteredHistories.length - 1 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-background/80 hover:bg-background shadow-lg"
+                  onClick={goToNextImage}
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </Button>
+              )}
+          </div>
+
+          <div className="flex justify-between items-center pt-1">
+            {/* 왼쪽: 이미지 카운터 (슬라이드 모드일 때만) */}
+            <div className="text-xs text-muted-foreground">
+              {currentImageIndex !== null && (
+                <span>
+                  {currentImageIndex + 1} / {sortedFilteredHistories.length}
+                </span>
+              )}
+            </div>
+
+            {/* 오른쪽: 다운로드, 닫기 버튼 */}
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => downloadImage(lightboxImage?.url, lightboxImage?.title)}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                다운로드
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLightboxOpen(false)}
+              >
+                닫기
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
