@@ -107,6 +107,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
   const [comparePosition, setComparePosition] = useState(50);
+  const [isDisplayedImageLoading, setIsDisplayedImageLoading] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isProUnlocked, setIsProUnlocked] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState({
@@ -166,6 +167,10 @@ const EditScreen: React.FC<EditScreenProps> = ({
 
     observer.observe(imageElement);
     return () => observer.disconnect();
+  }, [displayedImageUrl]);
+
+  useEffect(() => {
+    setIsDisplayedImageLoading(true);
   }, [displayedImageUrl]);
 
   const detectMutation = useMutation({
@@ -655,6 +660,10 @@ const EditScreen: React.FC<EditScreenProps> = ({
                 width: clientWidth,
                 height: clientHeight,
               });
+              setIsDisplayedImageLoading(false);
+            }}
+            onError={() => {
+              setIsDisplayedImageLoading(false);
             }}
           />
 
@@ -708,6 +717,23 @@ const EditScreen: React.FC<EditScreenProps> = ({
                             비교
                           </span>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {compareImages && isComparing && isDisplayedImageLoading && (
+                  <div
+                    className="absolute inset-0 z-40 pointer-events-none overflow-hidden"
+                    style={{ clipPath: `inset(0 0 0 ${comparePosition}%)` }}
+                  >
+                    <div className="absolute inset-0 bg-foreground/30 backdrop-blur-md" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="bg-card/90 border border-border/50 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                        <span className="text-xs font-medium text-foreground">
+                          새 이미지 불러오는 중
+                        </span>
                       </div>
                     </div>
                   </div>
