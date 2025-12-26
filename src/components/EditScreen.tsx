@@ -1118,7 +1118,11 @@ const EditScreen: React.FC<EditScreenProps> = ({
                   ) : (
                     <Scan className="w-5 h-5" />
                   )}
-                  {isProcessing ? '이미지 처리 중...' : '이미지 처리하기'}
+                  {isProcessing
+                    ? '이미지 처리 중...'
+                    : processedImageUrl
+                    ? '다시 처리하기'
+                    : '이미지 처리하기'}
                 </Button>
 
                 <div className="flex gap-3">
