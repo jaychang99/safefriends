@@ -11,6 +11,7 @@ import {
   Loader2,
   MoveHorizontal,
   Download,
+  X,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import {
@@ -49,6 +50,8 @@ interface DetectionBox {
   width: number;
   height: number;
   isActive: boolean;
+  isManual?: boolean;
+  detectId?: number;
 }
 
 const CATEGORY_LABELS: Record<DetectCategory, string> = {
@@ -110,6 +113,42 @@ const EditScreen: React.FC<EditScreenProps> = ({
     portrait: true,
   });
 
+  const createManualDetection = (): DetectionBox | null => {
+    if (!imageSize) {
+      toast({
+        variant: 'destructive',
+        title: '이미지를 불러오는 중이에요',
+        description: '이미지가 준비된 후 수동 영역을 추가할 수 있어요.',
+      });
+      return null;
+    }
+
+    const defaultWidth = 20;
+    const defaultHeight = 20;
+    const x = (100 - defaultWidth) / 2;
+    const y = (100 - defaultHeight) / 2;
+
+    return {
+      id: `manual-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      category: 'ETC',
+      label: CATEGORY_LABELS.ETC,
+      x,
+      y,
+      width: defaultWidth,
+      height: defaultHeight,
+      isActive: true,
+      isManual: true,
+    };
+  };
+
+  const handleAddManualDetection = () => {
+    const manualDetection = createManualDetection();
+    if (!manualDetection) return;
+
+    setDetections((prev) => [...prev, manualDetection]);
+    setIsAnalyzed(true);
+  };
+
   useEffect(() => {
     const imageElement = imageRef.current;
     if (!imageElement) return;
@@ -149,11 +188,13 @@ const EditScreen: React.FC<EditScreenProps> = ({
           id: `${det.category}-${idx}-${det.x}-${det.y}`,
           category: det.category,
           label: CATEGORY_LABELS[det.category],
+          detectId: det.detectId,
           x: xPercent,
           y: yPercent,
           width: widthPercent,
           height: heightPercent,
           isActive: true,
+          isManual: false,
         };
       });
 
@@ -284,6 +325,10 @@ const EditScreen: React.FC<EditScreenProps> = ({
     );
   };
 
+  const removeManualDetection = (id: string) => {
+    setDetections((prev) => prev.filter((d) => !(d.id === id && d.isManual)));
+  };
+
   const getFilterStyle = (isActive: boolean): React.CSSProperties => {
     if (!isActive) return {};
 
@@ -392,6 +437,54 @@ const EditScreen: React.FC<EditScreenProps> = ({
     window.addEventListener('pointerup', handlePointerUp);
   };
 
+  const handleDragStart = (
+    detection: DetectionBox,
+    event: React.PointerEvent<HTMLButtonElement>,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const container = imageContainerRef.current;
+    const rect = renderedImageSize ?? container?.getBoundingClientRect();
+    if (!rect?.width || !rect?.height) return;
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startLeft = detection.x;
+    const startTop = detection.y;
+    let hasMoved = false;
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = ((moveEvent.clientX - startX) / rect.width) * 100;
+      const deltaY = ((moveEvent.clientY - startY) / rect.height) * 100;
+      hasMoved = true;
+
+      setDetections((prev) =>
+        prev.map((d) => {
+          if (d.id !== detection.id) return d;
+          const nextX = Math.min(100 - d.width, Math.max(0, startLeft + deltaX));
+          const nextY = Math.min(
+            100 - d.height,
+            Math.max(0, startTop + deltaY),
+          );
+          return { ...d, x: nextX, y: nextY };
+        }),
+      );
+    };
+
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+
+      if (!hasMoved) {
+        toggleDetection(detection.id);
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
+
   const detectTargets: DetectCategory[] = Object.entries(selectedOptions)
     .filter(([, enabled]) => enabled)
     .map(([key]) => {
@@ -439,11 +532,12 @@ const EditScreen: React.FC<EditScreenProps> = ({
     return detections
       .filter((d) => d.isActive)
       .map((d) => ({
-        category: d.category,
+        category: d.isManual ? 'ETC' : d.category,
         x: Math.round((d.x / 100) * imageSize.width),
         y: Math.round((d.y / 100) * imageSize.height),
         width: Math.round((d.width / 100) * imageSize.width),
         height: Math.round((d.height / 100) * imageSize.height),
+        detectId: d.isManual ? undefined : d.detectId,
       }));
   };
 
@@ -604,11 +698,12 @@ const EditScreen: React.FC<EditScreenProps> = ({
                   </div>
                 )}
 
-                {isAnalyzed &&
+                {isAnalyzed && !isComparing &&
                   detections.map((detection) => (
                     <button
                       key={detection.id}
-                      onClick={() => toggleDetection(detection.id)}
+                      type="button"
+                      onPointerDown={(event) => handleDragStart(detection, event)}
                       className={`group absolute transition-all duration-300 rounded-xl border-2 ${
                         detection.isActive
                           ? 'border-primary shadow-lg'
@@ -629,6 +724,26 @@ const EditScreen: React.FC<EditScreenProps> = ({
                           <Eye className="w-3 h-3" />
                         )}
                         {detection.label}
+                        {detection.isManual && (
+                          <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary-foreground/10 text-primary-foreground/90">
+                            수동
+                          </span>
+                        )}
+                        {detection.isManual && (
+                          <button
+                            type="button"
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              removeManualDetection(detection.id);
+                            }}
+                            className="ml-1 rounded-full p-1 hover:bg-primary-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/60"
+                            aria-label="수동 영역 삭제"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                       <div
                         className="absolute bottom-1 right-1 w-3 h-3 rounded-sm bg-primary/80 text-primary-foreground cursor-se-resize opacity-0 group-hover:opacity-100 transition-opacity"
@@ -785,6 +900,30 @@ const EditScreen: React.FC<EditScreenProps> = ({
             )}
           </div>
 
+          {isAnalyzed && (
+            <div className="flex flex-col gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    수동 영역 추가
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    중앙에 새 박스를 만든 뒤 드래그와 리사이즈로 위치를 조정하세요.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="whitespace-nowrap"
+                  onClick={handleAddManualDetection}
+                  disabled={isAnalyzing}
+                >
+                  + 새 영역
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Filter Type */}
           <div>
             <div className="flex items-center gap-2 mb-2 mt-2">
@@ -866,14 +1005,37 @@ const EditScreen: React.FC<EditScreenProps> = ({
                         : 'bg-muted/50 border-transparent'
                     }`}
                   >
-                    <span className="font-medium text-foreground">
-                      {detection.label}
-                    </span>
-                    {detection.isActive ? (
-                      <EyeOff className="w-4 h-4 text-primary" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-muted-foreground" />
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-foreground">
+                        {detection.label}
+                      </span>
+                      {detection.isManual && (
+                        <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                          수동
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {detection.isManual && (
+                        <button
+                          type="button"
+                          className="p-1 rounded-full hover:bg-primary/10"
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeManualDetection(detection.id);
+                          }}
+                          aria-label="수동 영역 삭제"
+                        >
+                          <X className="w-4 h-4 text-primary" />
+                        </button>
+                      )}
+                      {detection.isActive ? (
+                        <EyeOff className="w-4 h-4 text-primary" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
