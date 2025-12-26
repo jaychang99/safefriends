@@ -5,9 +5,10 @@ interface HeaderProps {
   showBack?: boolean;
   onBack?: () => void;
   title?: string;
+  rightContent?: React.ReactNode;
 }
 
-const Header: React.FC<HeaderProps> = ({ showBack, onBack, title }) => {
+const Header: React.FC<HeaderProps> = ({ showBack, onBack, title, rightContent }) => {
   return (
     <header className="flex items-center justify-between px-5 py-3 bg-card/80 backdrop-blur-md border-b border-border/50">
       <div className="w-10">
@@ -29,8 +30,10 @@ const Header: React.FC<HeaderProps> = ({ showBack, onBack, title }) => {
           {title || 'SafeFriends'}
         </span>
       </div>
-      
-      <div className="w-10" />
+
+      <div className="flex items-center justify-end min-w-[2.5rem]">
+        {rightContent}
+      </div>
     </header>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ImagePlus, Camera, Sparkles } from 'lucide-react';
+import { ImagePlus, Camera, Sparkles, History } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import Header from './Header';
 
@@ -9,6 +10,7 @@ interface UploadScreenProps {
 
 const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleUpload = () => {
     setIsLoading(true);
@@ -102,6 +104,15 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
             >
               <Camera className="w-4 h-4" />
               카메라
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+              onClick={() => navigate('/dashboard')}
+            >
+              <History className="w-4 h-4" />
+              히스토리
             </Button>
           </div>
         </div>
