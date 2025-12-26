@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Instagram Image Injector",
-    "version": "1.0",
-    "description": "Inject image into Instagram upload input",
+    "name": "Safelens - Instagram Uploader",
+    "version": "1.0.0",
+    "description": "AI로 개인정보를 자동 감지하고 보호한 후 Instagram에 안전하게 업로드",
     "permissions": [
         "activeTab",
         "scripting"
@@ -11,7 +11,19 @@
         "https://www.instagram.com/*"
     ],
     "action": {
-        "default_popup": "popup.html"
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "logo.svg",
+            "32": "logo.svg",
+            "48": "logo.svg",
+            "128": "logo.svg"
+        }
+    },
+    "icons": {
+        "16": "icon16.png",
+        "32": "icon32.png",
+        "48": "icon48.png",
+        "128": "icon128.png"
     },
     "content_scripts": [
         {
@@ -19,7 +31,6 @@
                 "https://www.instagram.com/*"
             ],
             "js": [
-                "instagram-uploader.js",
                 "content.js"
             ],
             "run_at": "document_end"
