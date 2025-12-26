@@ -1,22 +1,20 @@
-import React, { useState } from 'react';
-import PhoneFrame from '@/components/PhoneFrame';
+import { useState } from 'react';
 import UploadScreen from '@/components/UploadScreen';
 import EditScreen from '@/components/EditScreen';
 
-type Screen = 'upload' | 'edit';
-
-const Index: React.FC = () => {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('upload');
+const Index = () => {
+  const [currentScreen, setCurrentScreen] = useState<'upload' | 'edit'>('upload');
 
   return (
-    <PhoneFrame>
-      {currentScreen === 'upload' && (
-        <UploadScreen onUpload={() => setCurrentScreen('edit')} />
-      )}
-      {currentScreen === 'edit' && (
-        <EditScreen onBack={() => setCurrentScreen('upload')} />
-      )}
-    </PhoneFrame>
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-md min-h-screen">
+        {currentScreen === 'upload' ? (
+          <UploadScreen onUpload={() => setCurrentScreen('edit')} />
+        ) : (
+          <EditScreen onBack={() => setCurrentScreen('upload')} />
+        )}
+      </div>
+    </div>
   );
 };
 

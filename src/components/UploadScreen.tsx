@@ -19,7 +19,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-card">
+    <div className="min-h-screen flex flex-col bg-card">
       <Header />
       
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">

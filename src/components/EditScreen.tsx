@@ -83,11 +83,11 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-card overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-card">
       <Header showBack onBack={onBack} title="사진 편집" />
       
-      {/* Image Container - 고정 높이 */}
-      <div className="relative h-[45%] min-h-[200px] bg-foreground/5 flex-shrink-0">
+      {/* Image Container */}
+      <div className="relative aspect-[4/3] bg-foreground/5 flex-shrink-0">
         <img
           src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80"
           alt="카페에서 노트북 작업 중인 사람"
@@ -151,11 +151,11 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
         )}
       </div>
 
-      {/* Bottom Sheet - 스크롤 가능 */}
-      <div className="flex-1 bg-card rounded-t-3xl shadow-lg border-t border-border/50 bottom-sheet-enter flex flex-col overflow-hidden -mt-4 relative z-10">
-        <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mt-3 flex-shrink-0" />
+      {/* Bottom Sheet */}
+      <div className="flex-1 bg-card rounded-t-3xl shadow-lg border-t border-border/50 bottom-sheet-enter -mt-4 relative z-10">
+        <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mt-3" />
         
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 pb-8">
+        <div className="px-5 py-4 space-y-4 pb-8">
           {/* Detection Options */}
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-3">감지할 대상</h3>
