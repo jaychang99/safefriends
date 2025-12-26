@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import { Check, Scan, Save, Share2, Eye, EyeOff, Crown, Lock } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import Header from './Header';
 import { toast } from '@/hooks/use-toast';
 
 interface EditScreenProps {
@@ -135,8 +134,6 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-card">
-      <Header showBack onBack={onBack} title="사진 편집" />
-      
       {/* Image Container */}
       <div ref={imageContainerRef} className="relative flex-1 lg:flex-[2] bg-foreground/5 min-h-[300px] lg:min-h-screen">
         <img
