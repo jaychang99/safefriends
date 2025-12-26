@@ -7,13 +7,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-md min-h-screen">
-        {currentScreen === 'upload' ? (
-          <UploadScreen onUpload={() => setCurrentScreen('edit')} />
-        ) : (
-          <EditScreen onBack={() => setCurrentScreen('upload')} />
-        )}
-      </div>
+      {currentScreen === 'upload' ? (
+        <UploadScreen onUpload={() => setCurrentScreen('edit')} />
+      ) : (
+        <EditScreen onBack={() => setCurrentScreen('upload')} />
+      )}
     </div>
   );
 };

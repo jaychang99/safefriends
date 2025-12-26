@@ -83,11 +83,11 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-card">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-card">
       <Header showBack onBack={onBack} title="사진 편집" />
       
       {/* Image Container */}
-      <div className="relative aspect-[4/3] bg-foreground/5 flex-shrink-0">
+      <div className="relative flex-1 lg:flex-[2] bg-foreground/5 min-h-[300px] lg:min-h-screen">
         <img
           src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&q=80"
           alt="카페에서 노트북 작업 중인 사람"
@@ -151,11 +151,13 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
         )}
       </div>
 
-      {/* Bottom Sheet */}
-      <div className="flex-1 bg-card rounded-t-3xl shadow-lg border-t border-border/50 bottom-sheet-enter -mt-4 relative z-10">
-        <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mt-3" />
+      {/* Control Panel - Bottom sheet on mobile, sidebar on desktop */}
+      <div className="lg:w-96 lg:min-h-screen bg-card rounded-t-3xl lg:rounded-none shadow-lg lg:shadow-none border-t lg:border-t-0 lg:border-l border-border/50 -mt-4 lg:mt-0 relative z-10">
+        <div className="w-12 h-1.5 bg-muted rounded-full mx-auto mt-3 lg:hidden" />
         
-        <div className="px-5 py-4 space-y-4 pb-8">
+        <div className="px-5 lg:px-6 py-4 lg:py-8 space-y-5 lg:space-y-6 pb-8">
+          <h2 className="hidden lg:block text-xl font-bold text-foreground">편집 옵션</h2>
+          
           {/* Detection Options */}
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-3">감지할 대상</h3>
@@ -196,7 +198,7 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
           {/* Filter Type */}
           <div>
             <h3 className="text-sm font-semibold text-foreground mb-3">필터 방식</h3>
-            <div className="flex gap-2">
+            <div className="flex flex-col lg:flex-col gap-2">
               {[
                 { key: 'blur', label: '블러' },
                 { key: 'mosaic', label: '모자이크' },
@@ -217,8 +219,35 @@ const EditScreen: React.FC<EditScreenProps> = ({ onBack }) => {
             </div>
           </div>
 
+          {/* Detection List - Desktop only */}
+          {isAnalyzed && (
+            <div className="hidden lg:block">
+              <h3 className="text-sm font-semibold text-foreground mb-3">감지된 영역</h3>
+              <div className="space-y-2">
+                {detections.map((detection) => (
+                  <button
+                    key={detection.id}
+                    onClick={() => toggleDetection(detection.id)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                      detection.isActive
+                        ? 'bg-primary/10 border-primary'
+                        : 'bg-muted/50 border-transparent'
+                    }`}
+                  >
+                    <span className="font-medium text-foreground">{detection.label}</span>
+                    {detection.isActive ? (
+                      <EyeOff className="w-4 h-4 text-primary" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Action Button */}
-          <div className="pt-2">
+          <div className="pt-2 lg:pt-4">
             {!isAnalyzed ? (
               <Button
                 variant="primary"
