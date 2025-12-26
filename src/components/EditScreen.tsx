@@ -106,7 +106,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
   );
   const [isDownloading, setIsDownloading] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
-  const [comparePosition, setComparePosition] = useState(50);
+  const [comparePosition, setComparePosition] = useState(30);
   const [isDisplayedImageLoading, setIsDisplayedImageLoading] = useState(false);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
   const [isProUnlocked, setIsProUnlocked] = useState(false);
@@ -232,7 +232,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
         data.oldUrl ?? displayedImageUrl ?? uploadResult.previewUrl;
       if (data.newUrl) {
         setCompareImages({ oldUrl: previousUrl, newUrl: data.newUrl });
-        setComparePosition(50);
+        setComparePosition(30);
         setIsComparing(true);
         setProcessedImageUrl(data.newUrl);
       } else {
@@ -727,7 +727,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
                     className="absolute inset-0 z-40 pointer-events-none overflow-hidden"
                     style={{ clipPath: `inset(0 0 0 ${comparePosition}%)` }}
                   >
-                    <div className="absolute inset-0 bg-foreground/30 backdrop-blur-md" />
+                    <div className="absolute inset-0 bg-foreground/30 backdrop-blur-2xl" />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="bg-card/90 border border-border/50 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
                         <Loader2 className="w-4 h-4 animate-spin text-primary" />
