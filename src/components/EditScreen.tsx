@@ -102,6 +102,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
     newUrl: string;
   } | null>(null);
   const [processedImageUrl, setProcessedImageUrl] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [isComparing, setIsComparing] = useState(false);
   const [comparePosition, setComparePosition] = useState(50);
   const [isPricingOpen, setIsPricingOpen] = useState(false);
@@ -578,7 +579,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
     });
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!processedImageUrl) {
       toast({
         title: '처리된 이미지가 없어요',
@@ -587,7 +588,12 @@ const EditScreen: React.FC<EditScreenProps> = ({
       return;
     }
 
-    void downloadEditedImage(processedImageUrl);
+    try {
+      setIsDownloading(true);
+      await downloadEditedImage(processedImageUrl);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const isAnalyzing = detectMutation.isPending;
@@ -1095,10 +1101,14 @@ const EditScreen: React.FC<EditScreenProps> = ({
                     size="lg"
                     className="flex-1 gap-2"
                     onClick={handleDownload}
-                    disabled={!processedImageUrl || isProcessing}
+                    disabled={!processedImageUrl || isProcessing || isDownloading}
                   >
-                    <Download className="w-5 h-5" />
-                    저장
+                    {isDownloading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Download className="w-5 h-5" />
+                    )}
+                    {isDownloading ? '저장 중...' : '저장'}
                   </Button>
                 </div>
               </div>
