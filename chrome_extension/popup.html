@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: sans-serif;
+        width: 280px;
+        padding: 16px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      h3 {
+        margin: 0 0 12px 0;
+        font-size: 16px;
+        text-align: center;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: none;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 13px;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 13px;
+        transition: all 0.2s;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      #uploadBtn {
+        background: #4caf50;
+        color: white;
+      }
+
+      #autoUploadBtn {
+        background: #2196f3;
+        color: white;
+      }
+
+      #debugBtn {
+        background: #ff9800;
+        color: white;
+        font-size: 11px;
+        padding: 8px;
+      }
+
+      .info {
+        font-size: 11px;
+        text-align: center;
+        margin-top: 12px;
+        opacity: 0.9;
+      }
+
+      .divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.3);
+        margin: 12px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>📸 Instagram Auto Uploader</h3>
+
+    <input id="imageUrl" placeholder="이미지 URL을 입력하세요..." type="url" />
+
+    <button id="uploadBtn">🎯 수동 업로드 (모달 열린 후)</button>
+
+    <button id="autoUploadBtn">🚀 자동 업로드 (전체 자동화)</button>
+
+    <div class="divider"></div>
+
+    <button id="debugBtn">🔧 디버그 정보 보기</button>
+
+    <div class="info">💡 Instagram 메인 페이지에서 사용하세요</div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,28 @@
+{
+    "manifest_version": 3,
+    "name": "Instagram Image Injector",
+    "version": "1.0",
+    "description": "Inject image into Instagram upload input",
+    "permissions": [
+        "activeTab",
+        "scripting"
+    ],
+    "host_permissions": [
+        "https://www.instagram.com/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.instagram.com/*"
+            ],
+            "js": [
+                "instagram-uploader.js",
+                "content.js"
+            ],
+            "run_at": "document_end"
+        }
+    ]
+}
