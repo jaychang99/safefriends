@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   CalendarDays,
   Clock3,
+  CreditCard,
   ExternalLink,
   Filter,
   Loader2,
@@ -155,6 +156,12 @@ const Dashboard: React.FC = () => {
                 Mock data
               </Badge>
             )}
+            <Button variant="ghost" size="sm" className="gap-2" asChild>
+              <Link to="/billing">
+                <CreditCard className="w-4 h-4" />
+                요금제
+              </Link>
+            </Button>
             <Button
               variant="secondary"
               size="sm"

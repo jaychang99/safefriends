@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { ImagePlus, Camera, Sparkles, History } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from './ui/button';
 import Header from './Header';
@@ -57,7 +57,13 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-card">
-      <Header />
+      <Header
+        rightContent={
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/billing">요금제</Link>
+          </Button>
+        }
+      />
 
       <input
         type="file"
