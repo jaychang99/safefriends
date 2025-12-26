@@ -1,28 +1,74 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ImagePlus, Camera, Sparkles, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import Header from './Header';
+import { toast } from '@/hooks/use-toast';
 
 interface UploadScreenProps {
   onUpload: () => void;
 }
 
 const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  const handleUpload = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+  const handleSelectFile = () => {
+    if (isUploading) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      // 실제 업로드 시:
+      // const response = await fetch('/images/upload', {
+      //   method: 'POST',
+      //   body: formData,
+      // });
+      // if (!response.ok) throw new Error('이미지 업로드 실패');
+      // const result = await response.json();
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      toast({
+        title: '업로드 완료!',
+        description: '사진이 안전하게 업로드됐어요.',
+      });
+
       onUpload();
-    }, 1000);
+    } catch (error) {
+      console.error('Upload failed', error);
+      toast({
+        variant: 'destructive',
+        title: '업로드에 실패했어요',
+        description: '네트워크를 확인하고 다시 시도해주세요.',
+      });
+    } finally {
+      setIsUploading(false);
+      event.target.value = '';
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-card">
       <Header />
+
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+      />
       
       <div className="flex-1 flex flex-col lg:flex-row items-center justify-center px-6 py-8 lg:py-16 gap-8 lg:gap-16">
         {/* Hero Section */}
@@ -58,17 +104,17 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
         {/* Upload Zone */}
         <div className="w-full max-w-sm lg:max-w-md">
           <button
-            onClick={handleUpload}
-            disabled={isLoading}
+            onClick={handleSelectFile}
+            disabled={isUploading}
             className="w-full aspect-square border-2 border-dashed border-primary/30 rounded-3xl flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-accent/50 to-secondary/30 hover:from-accent hover:to-secondary transition-all duration-300 hover:border-primary/50 hover:shadow-card group disabled:opacity-70"
           >
-            {isLoading ? (
+            {isUploading ? (
               <div className="flex flex-col items-center gap-3">
                 <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center animate-pulse-soft">
                   <ImagePlus className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <span className="text-sm font-medium text-muted-foreground">
-                  사진을 불러오는 중...
+                  사진을 업로드 중...
                 </span>
                 <div className="flex gap-1">
                   <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -98,8 +144,8 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
             <Button
               variant="secondary"
               size="sm"
-              onClick={handleUpload}
-              disabled={isLoading}
+              onClick={handleSelectFile}
+              disabled={isUploading}
               className="gap-2"
             >
               <Camera className="w-4 h-4" />
