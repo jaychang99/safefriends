@@ -149,6 +149,11 @@
     animation: scan 2s ease-in-out infinite;
   }
 
+  .animate-progress {
+    animation: progress-fill 1.6s ease-in-out forwards;
+    transform-origin: left;
+  }
+
   @keyframes scan {
     0% {
       transform: translateY(0);
@@ -174,6 +179,15 @@
     }
     to {
       transform: translateY(0);
+    }
+  }
+
+  @keyframes progress-fill {
+    0% {
+      transform: scaleX(0);
+    }
+    100% {
+      transform: scaleX(1);
     }
   }
 }
