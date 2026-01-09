@@ -12,6 +12,7 @@ export interface DetectionRegion {
   height: number;
   detectId?: number;
   confidence?: number;
+  pii_type?: string;
 }
 
 export interface UploadResponse {
@@ -48,7 +49,7 @@ export interface EditResponse {
 }
 
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://192.168.68.196:8080';
+  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
