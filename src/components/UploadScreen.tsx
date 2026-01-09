@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Button } from './ui/button';
 import Header from './Header';
+import AuthActions from '@/components/AuthActions';
 import { toast } from '@/hooks/use-toast';
 import { uploadImage } from '@/lib/api';
 
@@ -59,9 +60,12 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
     <div className="min-h-screen flex flex-col bg-card">
       <Header
         rightContent={
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/billing">요금제</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/billing">요금제</Link>
+            </Button>
+            <AuthActions />
+          </div>
         }
       />
 

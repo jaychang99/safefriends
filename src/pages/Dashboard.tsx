@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import Header from '@/components/Header';
+import AuthActions from '@/components/AuthActions';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -66,6 +67,7 @@ import {
   isUsingMockHistoryApi,
 } from '@/lib/history';
 import usePageTitle from '@/hooks/usePageTitle';
+import useAuthSession from '@/hooks/useAuthSession';
 
 type FilterTab = FilterType | 'ALL';
 type CategoryTab = DetectCategory | 'ALL';
@@ -95,10 +97,10 @@ const categoryTone: Record<DetectCategory, string> = {
 const formatDate = (value: string) =>
   format(new Date(value), 'yyyy.MM.dd HH:mm');
 
-const memberId = 1;
-
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuthSession();
+  const memberId = user?.memberId ?? 1;
   const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(
     null,
   );
@@ -341,6 +343,7 @@ const Dashboard: React.FC = () => {
             >
               <Sparkles className="w-4 h-4" />새 편집
             </Button>
+            <AuthActions />
           </div>
         }
       />

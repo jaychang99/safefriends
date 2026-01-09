@@ -1,4 +1,10 @@
 import axios from 'axios';
+import {
+  AUTH_EXPIRED_EVENT,
+  AUTH_FORBIDDEN_EVENT,
+  clearAuthSession,
+  getAuthToken,
+} from './auth';
 
 export type FilterType = 'BLUR' | 'MOSAIC' | 'AI';
 
@@ -17,6 +23,24 @@ export interface DetectionRegion {
 
 export interface UploadResponse {
   imageUuid: string;
+}
+
+export interface SignupRequest {
+  username: string;
+  password: string;
+  nickname: string;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  username: string;
+  nickname: string;
+  memberId?: number;
 }
 
 export interface DetectRequest {
@@ -55,6 +79,68 @@ export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: false,
 });
+
+apiClient.interceptors.request.use((config) => {
+  const token = getAuthToken();
+  if (token) {
+    // @ts-expect-error TODO: resolve error and assign a proper type
+    config.headers = {
+      ...config.headers,
+      Authorization: `Bearer ${token}`,
+    };
+  }
+  return config;
+});
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401) {
+      clearAuthSession();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
+      }
+    }
+    if (status === 403 && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(AUTH_FORBIDDEN_EVENT));
+    }
+    return Promise.reject(error);
+  },
+);
+
+export const getApiErrorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data as
+      | { message?: string; errors?: Array<{ message?: string }> }
+      | undefined;
+    if (data?.message) return data.message;
+    const nestedMessage = data?.errors?.[0]?.message;
+    if (nestedMessage) return nestedMessage;
+
+    if (error.response?.status === 401) {
+      return '아이디 또는 비밀번호가 올바르지 않아요.';
+    }
+    if (error.response?.status === 400) {
+      return '입력값을 다시 확인해주세요.';
+    }
+    if (error.response?.status === 403) {
+      return '접근 권한이 없어요.';
+    }
+  }
+
+  return fallback;
+};
+
+export const signup = async (payload: SignupRequest) => {
+  const { data } = await apiClient.post<AuthResponse>('/auth/signup', payload);
+  return data;
+};
+
+export const login = async (payload: LoginRequest) => {
+  const { data } = await apiClient.post<AuthResponse>('/auth/login', payload);
+  return data;
+};
 
 export const uploadImage = async (file: File) => {
   const formData = new FormData();

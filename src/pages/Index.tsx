@@ -2,6 +2,7 @@ import { useState } from 'react';
 import UploadScreen from '@/components/UploadScreen';
 import EditScreen from '@/components/EditScreen';
 import usePageTitle from '@/hooks/usePageTitle';
+import useAuthSession from '@/hooks/useAuthSession';
 
 const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<'upload' | 'edit'>(
@@ -12,6 +13,7 @@ const Index = () => {
     previewUrl: string;
     fileName: string;
   } | null>(null);
+  const { user } = useAuthSession();
 
   const handleReset = () => {
     setCurrentScreen('upload');
@@ -32,7 +34,11 @@ const Index = () => {
           }}
         />
       ) : (
-        <EditScreen onBack={handleReset} uploadResult={uploadResult} />
+        <EditScreen
+          onBack={handleReset}
+          uploadResult={uploadResult}
+          memberId={user?.memberId ?? 1}
+        />
       )}
     </div>
   );

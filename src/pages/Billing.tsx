@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Header from '@/components/Header';
+import AuthActions from '@/components/AuthActions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -147,9 +148,12 @@ const Billing: React.FC = () => {
         onBack={() => navigate(-1)}
         title="요금제 & 청구"
         rightContent={
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/dashboard">히스토리</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/dashboard">히스토리</Link>
+            </Button>
+            <AuthActions />
+          </div>
         }
       />
 
