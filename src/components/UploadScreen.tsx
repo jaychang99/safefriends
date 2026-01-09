@@ -7,6 +7,7 @@ import Header from './Header';
 import AuthActions from '@/components/AuthActions';
 import { toast } from '@/hooks/use-toast';
 import { uploadImage } from '@/lib/api';
+import useAuthSession from '@/hooks/useAuthSession';
 
 interface UploadScreenProps {
   onUpload: (payload: { imageUuid: string; previewUrl: string; fileName: string }) => void;
@@ -15,6 +16,7 @@ interface UploadScreenProps {
 const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthSession();
 
   const uploadMutation = useMutation({
     mutationFn: uploadImage,
@@ -22,6 +24,14 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onUpload }) => {
 
   const handleSelectFile = () => {
     if (uploadMutation.isPending) return;
+    if (!isAuthenticated) {
+      toast({
+        title: '로그인이 필요해요',
+        description: '사진 업로드 전에 로그인해주세요.',
+      });
+      navigate('/login');
+      return;
+    }
     fileInputRef.current?.click();
   };
 

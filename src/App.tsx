@@ -73,9 +73,7 @@ const App = () => {
             <Route
               path="/"
               element={
-                <RequireAuth>
-                  <Index />
-                </RequireAuth>
+                <Index />
               }
             />
             <Route
