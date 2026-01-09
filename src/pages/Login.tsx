@@ -37,11 +37,7 @@ const Login: React.FC = () => {
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      setAuthSession(data.token, {
-        username: data.username,
-        nickname: data.nickname,
-        memberId: data.memberId,
-      });
+      setAuthSession(data.token);
       toast({
         title: '로그인 완료!',
         description: '다시 만나 반가워요.',

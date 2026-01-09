@@ -43,6 +43,12 @@ export interface AuthResponse {
   memberId?: number;
 }
 
+export interface MeResponse {
+  id: number;
+  nickname: string;
+  username?: string;
+}
+
 export interface DetectRequest {
   imageUuid: string;
   detectTargets: DetectCategory[];
@@ -139,6 +145,11 @@ export const signup = async (payload: SignupRequest) => {
 
 export const login = async (payload: LoginRequest) => {
   const { data } = await apiClient.post<AuthResponse>('/auth/login', payload);
+  return data;
+};
+
+export const getMe = async () => {
+  const { data } = await apiClient.get<MeResponse>('/users/me');
   return data;
 };
 

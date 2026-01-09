@@ -41,11 +41,7 @@ const Signup: React.FC = () => {
   const signupMutation = useMutation({
     mutationFn: signup,
     onSuccess: (data) => {
-      setAuthSession(data.token, {
-        username: data.username,
-        nickname: data.nickname,
-        memberId: data.memberId,
-      });
+      setAuthSession(data.token);
       toast({
         title: '회원가입 완료!',
         description: 'SafeLens에 오신 것을 환영합니다.',
