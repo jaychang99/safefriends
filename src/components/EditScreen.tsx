@@ -52,6 +52,7 @@ interface DetectionBox {
   isActive: boolean;
   isManual?: boolean;
   detectId?: number;
+  pii_type: string;
 }
 
 const CATEGORY_LABELS: Record<DetectCategory, string> = {
@@ -142,6 +143,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
       height: defaultHeight,
       isActive: true,
       isManual: true,
+      pii_type: 'OTHER',
     };
   };
 
@@ -203,6 +205,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
           height: heightPercent,
           isActive: true,
           isManual: false,
+          pii_type: det.pii_type,
         };
       });
 
@@ -552,6 +555,7 @@ const EditScreen: React.FC<EditScreenProps> = ({
         width: Math.round((d.width / 100) * imageSize.width),
         height: Math.round((d.height / 100) * imageSize.height),
         detectId: d.isManual ? undefined : d.detectId,
+        pii_type: d.isManual ? 'OTHER' : d.pii_type,
       }));
   };
 
