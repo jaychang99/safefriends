@@ -8,62 +8,70 @@
   :root {
     /* SafeLens - Green Nature Theme */
     /* Based on provided color scale */
-    
-    --background: 0 0% 100%;           /* #FFFFFF */
-    --foreground: 117 39% 17%;         /* #1C3E1A - Dark green text */
 
-    --card: 116 33% 98%;               /* #FAFEFA - Background #1 */
-    --card-foreground: 117 39% 17%;    /* #1C3E1A */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 117 39% 17%; /* #1C3E1A - Dark green text */
+
+    --card: 116 33% 98%; /* #FAFEFA - Background #1 */
+    --card-foreground: 117 39% 17%; /* #1C3E1A */
 
     --popover: 0 0% 100%;
     --popover-foreground: 117 39% 17%;
 
     /* Primary - Accent Green #168713 */
-    --primary: 119 79% 30%;            /* #168713 - Solid #9 */
+    --primary: 119 79% 30%; /* #168713 - Solid #9 */
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 120 100% 24%;      /* #007900 - Solid #10 */
+    --primary-glow: 120 100% 24%; /* #007900 - Solid #10 */
 
-    --secondary: 112 44% 97%;          /* #F5FBF4 - Background #2 */
+    --secondary: 112 44% 97%; /* #F5FBF4 - Background #2 */
     --secondary-foreground: 119 88% 27%; /* #0B8209 - Text #11 */
 
-    --muted: 0 0% 78%;                 /* #c8c8c8 - Gray */
-    --muted-foreground: 117 39% 17%;   /* #1C3E1A */
+    --muted: 0 0% 78%; /* #c8c8c8 - Gray */
+    --muted-foreground: 117 39% 17%; /* #1C3E1A */
 
-    --accent: 114 56% 93%;             /* #E7F8E5 - Interactive #3 */
-    --accent-foreground: 119 88% 27%;  /* #0B8209 */
+    --accent: 114 56% 93%; /* #E7F8E5 - Interactive #3 */
+    --accent-foreground: 119 88% 27%; /* #0B8209 */
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 115 48% 77%;             /* #ACE1A7 - Borders #6 */
-    --input: 115 48% 77%;              /* #ACE1A7 */
-    --ring: 119 79% 30%;               /* #168713 */
+    --border: 115 48% 77%; /* #ACE1A7 - Borders #6 */
+    --input: 115 48% 77%; /* #ACE1A7 */
+    --ring: 119 79% 30%; /* #168713 */
 
     --radius: 1rem;
 
     /* Extended color scale */
-    --ui-1: 116 33% 98%;               /* #FAFEFA */
-    --ui-2: 112 44% 97%;               /* #F5FBF4 */
-    --ui-3: 114 56% 93%;               /* #E7F8E5 */
-    --ui-4: 114 51% 89%;               /* #D7F2D4 */
-    --ui-5: 115 51% 84%;               /* #C4EBC0 */
-    --ui-6: 115 48% 77%;               /* #ACE1A7 */
-    --ui-7: 115 44% 67%;               /* #8BD285 */
-    --ui-8: 117 44% 53%;               /* #58BE52 */
-    --ui-9: 119 79% 30%;               /* #168713 */
-    --ui-10: 120 100% 24%;             /* #007900 */
-    --ui-11: 119 88% 27%;              /* #0B8209 */
-    --ui-12: 117 39% 17%;              /* #1C3E1A */
+    --ui-1: 116 33% 98%; /* #FAFEFA */
+    --ui-2: 112 44% 97%; /* #F5FBF4 */
+    --ui-3: 114 56% 93%; /* #E7F8E5 */
+    --ui-4: 114 51% 89%; /* #D7F2D4 */
+    --ui-5: 115 51% 84%; /* #C4EBC0 */
+    --ui-6: 115 48% 77%; /* #ACE1A7 */
+    --ui-7: 115 44% 67%; /* #8BD285 */
+    --ui-8: 117 44% 53%; /* #58BE52 */
+    --ui-9: 119 79% 30%; /* #168713 */
+    --ui-10: 120 100% 24%; /* #007900 */
+    --ui-11: 119 88% 27%; /* #0B8209 */
+    --ui-12: 117 39% 17%; /* #1C3E1A */
 
     /* Custom tokens */
     --blur-overlay: 119 79% 30%;
-    --success: 119 79% 30%;            /* Same as primary for this theme */
+    --success: 119 79% 30%; /* Same as primary for this theme */
     --success-foreground: 0 0% 100%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(119 79% 30%), hsl(120 100% 24%));
-    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(112 44% 97%));
-    
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(119 79% 30%),
+      hsl(120 100% 24%)
+    );
+    --gradient-surface: linear-gradient(
+      180deg,
+      hsl(0 0% 100%),
+      hsl(112 44% 97%)
+    );
+
     /* Shadows */
     --shadow-sm: 0 2px 8px -2px hsl(119 79% 30% / 0.08);
     --shadow-md: 0 8px 24px -4px hsl(119 79% 30% / 0.12);
@@ -87,7 +95,7 @@
     --card-foreground: 116 33% 98%;
     --popover: 117 39% 12%;
     --popover-foreground: 116 33% 98%;
-    --primary: 117 44% 53%;            /* #58BE52 - brighter for dark mode */
+    --primary: 117 44% 53%; /* #58BE52 - brighter for dark mode */
     --primary-foreground: 117 39% 10%;
     --secondary: 117 39% 15%;
     --secondary-foreground: 115 51% 84%;
@@ -110,7 +118,8 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui,
+      sans-serif;
   }
 }
 
@@ -137,7 +146,8 @@
   }
 
   @keyframes pulse-soft {
-    0%, 100% {
+    0%,
+    100% {
       opacity: 1;
     }
     50% {
@@ -150,7 +160,7 @@
   }
 
   .animate-progress {
-    animation: progress-fill 1.6s ease-in-out forwards;
+    animation: progress-fill 0.5s ease-in-out forwards;
     transform-origin: left;
   }
 
